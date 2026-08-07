@@ -66,14 +66,14 @@ InsightFlow-AI/
 | 5     | Analytics Engine                           | Complete    |
 | 6     | Visualization Engine                       | Complete    |
 | 7     | React Frontend                             | Complete    |
-| 8     | RAG                                        | Pending     |
-| 9     | Machine Learning                           | Pending     |
-| 10    | Business Insight Engine                    | Pending     |
+| 8     | RAG                                        | Complete    |
+| 9     | Machine Learning                           | Complete    |
+| 10    | Business Insight Engine                    | Complete    |
 | 11    | Deployment                                 | Pending     |
 
 ## Getting Started
 
-Phases 0–7 provide a runnable full stack: FastAPI engines + React dashboard.
+Phases 0–10 provide a runnable full stack: FastAPI engines (including Insight) + React dashboard.
 
 ```bash
 # Clone
@@ -101,6 +101,9 @@ npm run dev
 - App: http://127.0.0.1:5173
 - API docs: http://127.0.0.1:8000/docs
 - Health: http://127.0.0.1:8000/api/v1/health
+- RAG query: `POST /api/v1/rag/query`
+- ML run: `POST /api/v1/ml/run`
+- Insight: `POST /api/v1/insight/analyze`
 
 See [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) for engineering rules, hybrid AI philosophy, and phase constraints.
 See [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md) for details.

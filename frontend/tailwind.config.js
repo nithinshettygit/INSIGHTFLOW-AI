@@ -6,10 +6,15 @@ export default {
       colors: {
         ink: "var(--ink)",
         muted: "var(--muted)",
-        accent: "var(--accent)",
+        accent: {
+          DEFAULT: "var(--accent)",
+          deep: "var(--accent-deep)",
+          soft: "var(--accent-soft)",
+        },
         panel: "var(--panel)",
         line: "var(--line)",
         soft: "var(--soft)",
+        online: "var(--online)",
       },
       fontFamily: {
         display: ["Syne", "sans-serif"],

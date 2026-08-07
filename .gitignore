@@ -61,6 +61,8 @@ backend/data/uploads/*
 !backend/data/uploads/.gitkeep
 backend/data/processed/*
 !backend/data/processed/.gitkeep
+backend/data/rag/*
+!backend/data/rag/.gitkeep
 backend/models/*
 !backend/models/.gitkeep
 !backend/models/.gitkeep

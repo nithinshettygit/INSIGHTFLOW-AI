@@ -34,10 +34,15 @@ export async function getDatasetProfile(datasetId) {
   return data;
 }
 
-export async function detectIntent(query, datasetId) {
+export async function deleteDataset(datasetId) {
+  await api.delete(`/datasets/${datasetId}`);
+}
+
+export async function detectIntent(query, datasetId, sessionId) {
   const { data } = await api.post("/intent/detect", {
     query,
     dataset_id: datasetId || null,
+    session_id: sessionId || null,
   });
   return data;
 }
@@ -49,6 +54,26 @@ export async function runAnalytics(payload) {
 
 export async function createChart(payload) {
   const { data } = await api.post("/visualization/chart", payload);
+  return data;
+}
+
+export async function queryRag(payload) {
+  const { data } = await api.post("/rag/query", payload);
+  return data;
+}
+
+export async function getRagStatus(datasetId) {
+  const { data } = await api.get(`/rag/${datasetId}/status`);
+  return data;
+}
+
+export async function runMl(payload) {
+  const { data } = await api.post("/ml/run", payload);
+  return data;
+}
+
+export async function analyzeInsight(payload) {
+  const { data } = await api.post("/insight/analyze", payload);
   return data;
 }
 

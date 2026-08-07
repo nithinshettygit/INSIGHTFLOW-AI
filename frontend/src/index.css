@@ -5,16 +5,18 @@
 @tailwind utilities;
 
 :root {
-  --ink: #12202a;
-  --muted: #5b6b74;
-  --accent: #0d7377;
-  --accent-deep: #095456;
-  --panel: rgba(255, 255, 255, 0.78);
-  --line: #c9d5d8;
-  --soft: #eef4f5;
-  --bg-a: #d9e6e8;
-  --bg-b: #f3f1ea;
-  --warn: #9a5b1d;
+  --ink: #0b1f33;
+  --muted: #5a6d7c;
+  --accent: #0e7490;
+  --accent-deep: #0a5c72;
+  --accent-soft: #d9f0f5;
+  --panel: rgba(255, 255, 255, 0.86);
+  --line: #c5d4de;
+  --soft: #eef4f8;
+  --bg-a: #dce8f0;
+  --bg-b: #f4f7fa;
+  --warn: #b45309;
+  --online: #0f766e;
 }
 
 * {
@@ -32,10 +34,36 @@ body {
   color: var(--ink);
   font-family: Manrope, sans-serif;
   background:
-    radial-gradient(1200px 600px at 12% -10%, rgba(13, 115, 119, 0.18), transparent 55%),
-    radial-gradient(900px 500px at 90% 0%, rgba(154, 91, 29, 0.12), transparent 50%),
-    linear-gradient(160deg, var(--bg-a), var(--bg-b));
+    radial-gradient(1100px 560px at 8% -8%, rgba(14, 116, 144, 0.2), transparent 58%),
+    radial-gradient(800px 420px at 96% 4%, rgba(15, 118, 110, 0.1), transparent 52%),
+    linear-gradient(165deg, var(--bg-a) 0%, var(--bg-b) 55%, #eef2f6 100%);
   background-attachment: fixed;
+}
+
+.app-shell {
+  min-height: 100dvh;
+}
+
+@keyframes scroll-cue-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.45;
+    transform: translateY(4px);
+  }
+}
+
+.scroll-cue {
+  animation: scroll-cue-pulse 1.4s ease-in-out infinite;
+}
+
+.scroll-cue-arrow {
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 body::before {
@@ -43,23 +71,57 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.28;
   background-image:
-    linear-gradient(rgba(18, 32, 42, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(18, 32, 42, 0.04) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: linear-gradient(to bottom, black, transparent 90%);
+    linear-gradient(rgba(11, 31, 51, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11, 31, 51, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
 }
 
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 18px 40px rgba(15, 35, 40, 0.08);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 36px rgba(11, 31, 51, 0.07);
 }
 
 .brand-mark {
-  letter-spacing: -0.04em;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+
+.brand-rail {
+  width: 4px;
+  align-self: stretch;
+  min-height: 2.75rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--online) 100%);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.2rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.status-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--warn);
+}
+
+.status-dot.is-online {
+  background: var(--online);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18);
 }
 
 .chat-scroll::-webkit-scrollbar,
@@ -69,6 +131,6 @@ body::before {
 
 .chat-scroll::-webkit-scrollbar-thumb,
 .side-scroll::-webkit-scrollbar-thumb {
-  background: #b7c5c9;
+  background: #a8bac6;
   border-radius: 8px;
 }

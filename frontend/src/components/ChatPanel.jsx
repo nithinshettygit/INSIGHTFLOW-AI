@@ -11,23 +11,23 @@ export default function ChatPanel({
   const endRef = useRef(null);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, busy]);
 
   return (
-    <section className="panel flex h-full flex-col overflow-hidden rounded-2xl">
-      <div className="border-b border-line px-5 py-4">
-        <h2 className="font-display text-lg tracking-tight">Ask InsightFlow</h2>
-        <p className="mt-1 text-sm text-muted">
-          Intent routes to analytics, charts, or profiling — LLM only when needed.
+    <section className="panel flex h-full min-h-0 flex-col overflow-hidden rounded-2xl">
+      <div className="shrink-0 border-b border-line bg-accent-soft/40 px-4 py-3 md:px-5">
+        <h2 className="font-display text-lg tracking-tight text-ink">Ask InsightFlow</h2>
+        <p className="mt-1 text-xs text-muted md:text-sm">
+          Ask for KPIs, charts, forecasts, document QA, or insights.
         </p>
       </div>
 
-      <div className="chat-scroll flex-1 space-y-3 overflow-y-auto px-4 py-4">
+      <div className="chat-scroll min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3 md:px-4">
         {messages.length === 0 && (
           <div className="rounded-xl bg-soft/80 px-4 py-3 text-sm text-muted">
-            Try: “Show a bar chart of sales by region” or “What is total sales by
-            segment?”
+            Try: “Bar chart of sales by region”, “Forecast next month sales”, or
+            “Why is profit uneven across regions?”
           </div>
         )}
         {messages.map((message) => (
@@ -56,7 +56,7 @@ export default function ChatPanel({
       </div>
 
       <form
-        className="border-t border-line p-4"
+        className="shrink-0 border-t border-line bg-white/70 p-3 backdrop-blur md:p-4"
         onSubmit={(event) => {
           event.preventDefault();
           onSubmit();
@@ -68,11 +68,9 @@ export default function ChatPanel({
             onChange={(event) => setQuery(event.target.value)}
             disabled={disabled || busy}
             placeholder={
-              disabled
-                ? "Select a dataset first"
-                : "Ask a business question…"
+              disabled ? "Select a dataset first" : "Ask a business question…"
             }
-            className="min-w-0 flex-1 rounded-xl border border-line bg-white/90 px-3 py-3 text-sm outline-none ring-accent focus:ring-2"
+            className="min-w-0 flex-1 rounded-xl border border-line bg-white px-3 py-3 text-sm outline-none ring-accent focus:ring-2"
           />
           <button
             type="submit"

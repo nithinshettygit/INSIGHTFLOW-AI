@@ -39,4 +39,5 @@ npm run preview
 
 ## Status
 
-Phase 7 complete: dashboard, upload, chat, and charts are wired to the Phase 0–6 backend.
+Phase 10 complete: dashboard routes explanation / recommendation / root-cause intents to
+`POST /insight/analyze` and renders findings, causes, and actions in Results.

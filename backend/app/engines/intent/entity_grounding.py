@@ -1,0 +1,214 @@
+"""Deterministic grounding of LLM entities to real dataset columns."""
+
+from __future__ import annotations
+
+import re
+from typing import Any
+
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+ALLOWED_CHART_TYPES = {
+    "bar",
+    "line",
+    "pie",
+    "scatter",
+    "histogram",
+    "area",
+    "box",
+}
+
+
+def role_hint_from_dtype(dtype: str) -> str:
+    text = (dtype or "").lower()
+    if any(token in text for token in ("int", "float", "double", "decimal", "number")):
+        return "numeric"
+    if "bool" in text:
+        return "boolean"
+    if any(token in text for token in ("datetime", "date", "time")):
+        return "datetime"
+    return "categorical"
+
+
+def build_schema_columns(profile_columns: list[Any] | None) -> list[dict[str, str]]:
+    """Build compact column schema for LLM context."""
+    schema: list[dict[str, str]] = []
+    for col in profile_columns or []:
+        if hasattr(col, "name"):
+            name = str(col.name)
+            dtype = str(getattr(col, "dtype", "unknown"))
+        elif isinstance(col, dict):
+            name = str(col.get("name", "")).strip()
+            dtype = str(col.get("dtype", "unknown"))
+        else:
+            continue
+        if not name:
+            continue
+        schema.append(
+            {
+                "name": name,
+                "dtype": dtype,
+                "role_hint": role_hint_from_dtype(dtype),
+            }
+        )
+    return schema
+
+
+def ground_entities(
+    entities: dict[str, Any] | None,
+    column_names: list[str] | None,
+) -> dict[str, Any]:
+    """Resolve entity column references to actual dataset column names.
+
+    Unmatched metric/dimension/filter fields are dropped. chart_type is
+    normalized against an allowlist.
+    """
+    entities = dict(entities or {})
+    columns = [str(c) for c in (column_names or []) if str(c).strip()]
+    lookup = {_normalize_name(c): c for c in columns}
+
+    resolved: dict[str, str] = {}
+    dropped: list[str] = []
+
+    grounded = {
+        "metrics": _ground_name_list(
+            entities.get("metrics"),
+            lookup,
+            resolved,
+            dropped,
+        ),
+        "dimensions": _ground_name_list(
+            entities.get("dimensions"),
+            lookup,
+            resolved,
+            dropped,
+        ),
+        "chart_type": _ground_chart_type(entities.get("chart_type")),
+        "filters": _ground_filters(
+            entities.get("filters"),
+            lookup,
+            resolved,
+            dropped,
+        ),
+        "grounding": {
+            "available_columns": columns,
+            "resolved": resolved,
+            "dropped": dropped,
+        },
+    }
+
+    if dropped:
+        logger.info("Dropped ungrounded entity refs: %s", dropped)
+    if resolved:
+        logger.debug("Grounded entity refs: %s", resolved)
+    return grounded
+
+
+def _ground_name_list(
+    values: Any,
+    lookup: dict[str, str],
+    resolved: dict[str, str],
+    dropped: list[str],
+) -> list[str]:
+    if not isinstance(values, list):
+        return []
+    grounded: list[str] = []
+    for raw in values:
+        if raw is None:
+            continue
+        text = str(raw).strip()
+        if not text:
+            continue
+        match = _match_column(text, lookup)
+        if match is None:
+            dropped.append(text)
+            continue
+        resolved[text] = match
+        if match not in grounded:
+            grounded.append(match)
+    return grounded
+
+
+def _ground_filters(
+    values: Any,
+    lookup: dict[str, str],
+    resolved: dict[str, str],
+    dropped: list[str],
+) -> list[Any]:
+    if not isinstance(values, list):
+        return []
+
+    grounded: list[Any] = []
+    for item in values:
+        if isinstance(item, str):
+            match = _match_column(item, lookup)
+            if match is None:
+                dropped.append(item)
+            else:
+                resolved[item] = match
+                grounded.append(match)
+            continue
+
+        if isinstance(item, dict):
+            field = item.get("field") or item.get("column") or item.get("name")
+            if field is None:
+                grounded.append(item)
+                continue
+            match = _match_column(str(field), lookup)
+            if match is None:
+                dropped.append(str(field))
+                continue
+            resolved[str(field)] = match
+            cleaned = dict(item)
+            if "field" in cleaned:
+                cleaned["field"] = match
+            elif "column" in cleaned:
+                cleaned["column"] = match
+            else:
+                cleaned["name"] = match
+            grounded.append(cleaned)
+            continue
+
+    return grounded
+
+
+def _ground_chart_type(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip().lower().replace("_", " ").replace("-", " ")
+    text = re.sub(r"\s+chart$", "", text).strip()
+    text = re.sub(r"\s+plot$", "", text).strip()
+    if text in ALLOWED_CHART_TYPES:
+        return text
+    return None
+
+
+def match_column(value: str, lookup: dict[str, str]) -> str | None:
+    """Resolve a free-text column reference against a normalized lookup map."""
+    direct = lookup.get(normalize_column_name(value))
+    if direct:
+        return direct
+
+    # Soft alias: allow compact forms like "sales" matching "order_sales" only when unique.
+    needle = normalize_column_name(value)
+    candidates = [
+        original
+        for key, original in lookup.items()
+        if needle and (needle == key or needle in key or key in needle)
+    ]
+    if len(candidates) == 1:
+        return candidates[0]
+    return None
+
+
+def normalize_column_name(value: str) -> str:
+    text = value.strip().lower()
+    text = text.replace("%", " percent ")
+    text = re.sub(r"[^\w]+", "_", text)
+    return text.strip("_")
+
+
+# Backward-compatible private aliases
+_match_column = match_column
+_normalize_name = normalize_column_name

@@ -1,0 +1,88 @@
+import { useEffect, useRef } from "react";
+
+export default function ChatPanel({
+  messages,
+  query,
+  setQuery,
+  onSubmit,
+  busy,
+  disabled,
+}) {
+  const endRef = useRef(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, busy]);
+
+  return (
+    <section className="panel flex h-full flex-col overflow-hidden rounded-2xl">
+      <div className="border-b border-line px-5 py-4">
+        <h2 className="font-display text-lg tracking-tight">Ask InsightFlow</h2>
+        <p className="mt-1 text-sm text-muted">
+          Intent routes to analytics, charts, or profiling — LLM only when needed.
+        </p>
+      </div>
+
+      <div className="chat-scroll flex-1 space-y-3 overflow-y-auto px-4 py-4">
+        {messages.length === 0 && (
+          <div className="rounded-xl bg-soft/80 px-4 py-3 text-sm text-muted">
+            Try: “Show a bar chart of sales by region” or “What is total sales by
+            segment?”
+          </div>
+        )}
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+              message.role === "user"
+                ? "ml-auto bg-accent text-white"
+                : "bg-white/80 text-ink ring-1 ring-line"
+            }`}
+          >
+            <div className="whitespace-pre-wrap">{message.content}</div>
+            {message.meta && (
+              <div className="mt-2 border-t border-white/20 pt-2 text-xs opacity-80">
+                {message.meta}
+              </div>
+            )}
+          </div>
+        ))}
+        {busy && (
+          <div className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-muted ring-1 ring-line">
+            Routing and running engines…
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+
+      <form
+        className="border-t border-line p-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSubmit();
+        }}
+      >
+        <div className="flex gap-2">
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            disabled={disabled || busy}
+            placeholder={
+              disabled
+                ? "Select a dataset first"
+                : "Ask a business question…"
+            }
+            className="min-w-0 flex-1 rounded-xl border border-line bg-white/90 px-3 py-3 text-sm outline-none ring-accent focus:ring-2"
+          />
+          <button
+            type="submit"
+            disabled={disabled || busy || !query.trim()}
+            className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-deep)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Send
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}

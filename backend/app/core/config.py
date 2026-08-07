@@ -50,6 +50,7 @@ class Settings(BaseSettings):
         alias="PROCESSED_DIR",
     )
     model_dir: str = Field(default="backend/models", alias="MODEL_DIR")
+    rag_dir: str = Field(default="backend/data/rag", alias="RAG_DIR")
 
     database_url: str = Field(
         default="sqlite:///./backend/data/insightflow.db",
@@ -58,6 +59,27 @@ class Settings(BaseSettings):
 
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     max_upload_size_mb: int = Field(default=25, alias="MAX_UPLOAD_SIZE_MB")
+
+    # RAG (Phase 8)
+    rag_chunk_size: int = Field(default=800, alias="RAG_CHUNK_SIZE")
+    rag_chunk_overlap: int = Field(default=120, alias="RAG_CHUNK_OVERLAP")
+    rag_top_k: int = Field(default=4, alias="RAG_TOP_K")
+    rag_embedding_dim: int = Field(default=384, alias="RAG_EMBEDDING_DIM")
+    rag_use_llm: bool = Field(default=True, alias="RAG_USE_LLM")
+    rag_temperature: float = Field(default=0.0, alias="RAG_TEMPERATURE")
+
+    # ML (Phase 9)
+    ml_default_horizon: int = Field(default=7, alias="ML_DEFAULT_HORIZON")
+    ml_default_clusters: int = Field(default=3, alias="ML_DEFAULT_CLUSTERS")
+    ml_anomaly_contamination: float = Field(
+        default=0.05,
+        alias="ML_ANOMALY_CONTAMINATION",
+    )
+    ml_random_state: int = Field(default=42, alias="ML_RANDOM_STATE")
+
+    # Insight (Phase 10)
+    insight_use_llm: bool = Field(default=True, alias="INSIGHT_USE_LLM")
+    insight_temperature: float = Field(default=0.1, alias="INSIGHT_TEMPERATURE")
 
     @property
     def is_development(self) -> bool:
@@ -81,6 +103,10 @@ class Settings(BaseSettings):
     @property
     def model_path(self) -> Path:
         return self.resolve_path(self.model_dir)
+
+    @property
+    def rag_path(self) -> Path:
+        return self.resolve_path(self.rag_dir)
 
 
 @lru_cache

@@ -164,6 +164,10 @@ class DatasetService:
 
         self._write_meta(dataset_dir / META_FILENAME, meta)
         self._persist_processed_summary(meta, profile)
+
+        if dataset_type == "pdf":
+            self._auto_index_pdf(meta)
+
         logger.info(
             "Uploaded dataset_id=%s type=%s size=%s name=%s",
             dataset_id,
@@ -215,7 +219,45 @@ class DatasetService:
         processed = self.settings.processed_path / f"{dataset_id}.profile.json"
         if processed.exists():
             processed.unlink(missing_ok=True)
+        try:
+            from app.services.rag_service import get_rag_service
+
+            get_rag_service().delete_index(dataset_id)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning("RAG cleanup failed for %s: %s", dataset_id, exc)
         logger.info("Deleted dataset_id=%s", dataset_id)
+
+    def _auto_index_pdf(self, meta: DatasetMeta) -> None:
+        """Build FAISS index for PDF uploads (Phase 8). Non-fatal on failure."""
+        try:
+            from app.services.rag_service import get_rag_service
+
+            result = get_rag_service().index_dataset(meta.dataset_id, force=True)
+            meta.extra = {
+                **meta.extra,
+                "rag_indexed": result.indexed,
+                "rag_chunk_count": result.chunk_count,
+                "rag_page_count": result.page_count,
+            }
+            self._write_meta(self._dataset_dir(meta.dataset_id) / META_FILENAME, meta)
+        except Exception as exc:
+            logger.warning(
+                "RAG auto-index failed dataset_id=%s: %s",
+                meta.dataset_id,
+                exc,
+            )
+            meta.extra = {
+                **meta.extra,
+                "rag_indexed": False,
+                "rag_error": str(exc),
+            }
+            try:
+                self._write_meta(
+                    self._dataset_dir(meta.dataset_id) / META_FILENAME,
+                    meta,
+                )
+            except Exception:
+                pass
 
     def _dataset_dir(self, dataset_id: str) -> Path:
         # Prevent path traversal via crafted IDs.

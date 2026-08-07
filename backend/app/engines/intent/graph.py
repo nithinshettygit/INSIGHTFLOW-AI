@@ -167,7 +167,14 @@ def build_intent_graph(
         engine = state.get("target_engine") or "none"
         route_meta = ENGINE_ROUTING.get(engine, ENGINE_ROUTING["none"])
         status = route_meta["status"]
-        if engine in {"profiling", "analytics", "visualization"}:
+        if engine in {
+            "profiling",
+            "analytics",
+            "visualization",
+            "rag",
+            "ml",
+            "insight",
+        }:
             status = "ready"
 
         if engine == "profiling":
@@ -179,6 +186,16 @@ def build_intent_graph(
         elif engine == "visualization":
             next_action = (
                 "Call POST /api/v1/visualization/chart with chart_type/metrics/dimensions"
+            )
+        elif engine == "rag":
+            next_action = "Call POST /api/v1/rag/query with dataset_id and question"
+        elif engine == "ml":
+            next_action = (
+                "Call POST /api/v1/ml/run with task=forecast|segmentation|anomaly"
+            )
+        elif engine == "insight":
+            next_action = (
+                "Call POST /api/v1/insight/analyze with question and optional mode"
             )
         else:
             next_action = "Queued for future engine implementation"

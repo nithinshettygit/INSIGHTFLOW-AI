@@ -216,7 +216,7 @@ class ProfilingService:
                 "original_filename": original_filename,
                 "page_count": page_count,
                 "text_sample": text_sample,
-                "note": "PDF document profile. Full document QA arrives in Phase 8 (RAG).",
+                "note": "PDF document profile. Use POST /rag/query for document QA.",
             },
         )
         logger.info(

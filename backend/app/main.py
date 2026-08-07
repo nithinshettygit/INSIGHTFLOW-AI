@@ -26,6 +26,7 @@ async def lifespan(app: FastAPI):
         settings.upload_path,
         settings.processed_path,
         settings.model_path,
+        settings.rag_path,
     ):
         path.mkdir(parents=True, exist_ok=True)
         logger.debug("Ensured directory exists: %s", path)
@@ -42,10 +43,10 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title=settings.app_name,
-        version="0.7.0",
+        version="0.10.0",
         description=(
             "InsightFlow AI — modular AI Business Intelligence Platform. "
-            "Phase 7: React dashboard (upload, chat, analytics, charts)."
+            "Phase 10: Business Insight Engine (explanation, recommendations, root cause)."
         ),
         debug=settings.debug,
         lifespan=lifespan,
@@ -78,6 +79,10 @@ def create_app() -> FastAPI:
             "intent_detect": f"{settings.api_prefix}/intent/detect",
             "analytics_query": f"{settings.api_prefix}/analytics/query",
             "visualization_chart": f"{settings.api_prefix}/visualization/chart",
+            "rag_query": f"{settings.api_prefix}/rag/query",
+            "rag_index": f"{settings.api_prefix}/rag/index",
+            "ml_run": f"{settings.api_prefix}/ml/run",
+            "insight_analyze": f"{settings.api_prefix}/insight/analyze",
         }
 
     return app

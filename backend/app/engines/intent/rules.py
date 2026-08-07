@@ -294,19 +294,19 @@ ENGINE_ROUTING = {
         "message": "Routed to Visualization Engine. Use POST /visualization/chart.",
     },
     "ml": {
-        "status": "planned",
+        "status": "ready",
         "phase": "Phase 9",
-        "message": "Routed to ML Engine (implementation in Phase 9).",
+        "message": "Routed to ML Engine. Use POST /ml/run.",
     },
     "rag": {
-        "status": "planned",
+        "status": "ready",
         "phase": "Phase 8",
-        "message": "Routed to RAG Engine (implementation in Phase 8).",
+        "message": "Routed to RAG Engine. Use POST /rag/query.",
     },
     "insight": {
-        "status": "planned",
+        "status": "ready",
         "phase": "Phase 10",
-        "message": "Routed to Insight Engine (implementation in Phase 10).",
+        "message": "Routed to Insight Engine. Use POST /insight/analyze.",
     },
     "profiling": {
         "status": "ready",

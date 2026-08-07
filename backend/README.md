@@ -59,6 +59,11 @@ Open http://127.0.0.1:8000 in the browser (not `http://0.0.0.0:8000`).
 - Intent catalog: `GET /api/v1/intent/catalog`
 - Analytics query: `POST /api/v1/analytics/query`
 - Visualization chart: `POST /api/v1/visualization/chart`
+- RAG index: `POST /api/v1/rag/index`
+- RAG query: `POST /api/v1/rag/query`
+- RAG status: `GET /api/v1/rag/{dataset_id}/status`
+- ML run: `POST /api/v1/ml/run` (`forecast` | `segmentation` | `anomaly`)
+- Insight analyze: `POST /api/v1/insight/analyze` (`explanation` | `recommendation` | `root_cause`)
 - Docs: http://127.0.0.1:8000/docs
 
 ### Supported upload types
@@ -67,9 +72,11 @@ Open http://127.0.0.1:8000 in the browser (not `http://0.0.0.0:8000`).
 |-----------|------|
 | `.csv` | CSV |
 | `.xlsx` | Excel |
-| `.pdf` | PDF |
+| `.pdf` | PDF (auto-indexed for RAG) |
 
 Uploads are profiled automatically (rows, columns, missing values, duplicates, statistics).
+PDF uploads are also chunked and indexed into FAISS for document QA.
+Tabular uploads support analytics, charts, ML tasks, and business insights.
 
 ## Test
 
@@ -80,6 +87,7 @@ python -m pytest -q
 
 ## Status
 
-Phase 7 complete: Visualization Engine builds Plotly charts; React dashboard consumes them.
-Intent routing marks `visualization`, `analytics`, and `profiling` as ready.
-Phase 8 will implement RAG for PDF/document QA.
+Phase 10 complete: Insight Engine builds processed evidence (profile/KPIs/segments/ML)
+then explains, recommends, or root-causes — Groq only for synthesis when enabled.
+Intent routing marks all engines through `insight` as ready.
+Phase 11 will cover deployment (Vercel / AWS EC2 / Nginx).

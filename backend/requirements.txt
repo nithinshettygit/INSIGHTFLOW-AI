@@ -1,4 +1,4 @@
-# InsightFlow AI — backend dependencies (Phase 6)
+# InsightFlow AI — backend dependencies (Phase 10)
 
 fastapi>=0.115.0,<1.0.0
 uvicorn[standard]>=0.32.0,<1.0.0
@@ -10,6 +10,7 @@ python-multipart>=0.0.9,<1.0.0
 pandas>=2.2.0,<3.0.0
 openpyxl>=3.1.0,<4.0.0
 pypdf>=5.0.0,<7.0.0
+numpy>=1.26.0,<3.0.0
 
 # Visualization
 plotly>=5.24.0,<7.0.0
@@ -18,6 +19,12 @@ plotly>=5.24.0,<7.0.0
 langgraph>=0.2.0,<1.0.0
 langchain-core>=0.3.0,<1.0.0
 langchain-groq>=0.2.0,<1.0.0
+
+# RAG (Phase 8)
+faiss-cpu>=1.8.0,<2.0.0
+
+# ML (Phase 9)
+scikit-learn>=1.5.0,<2.0.0
 
 # Testing
 pytest>=8.0.0,<9.0.0

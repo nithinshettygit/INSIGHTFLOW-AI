@@ -189,9 +189,17 @@ INTENT_RULES: tuple[IntentRule, ...] = (
             "max ",
             "minimum",
             "maximum",
+            "lowest",
+            "highest",
+            "which region",
+            "which category",
+            "which segment",
+            "which city",
+            "least sales",
+            "most sales",
         ),
-        weight=1.2,
-        priority=82,
+        weight=1.35,
+        priority=86,
     ),
     IntentRule(
         intent="analytics",
@@ -316,6 +324,14 @@ ENGINE_ROUTING = {
     "none": {
         "status": "planned",
         "phase": None,
-        "message": "No engine matched. Refine the query or try a supported intent.",
+        "message": (
+            "No engine matched. I can help with KPIs, charts, forecasts, "
+            "document QA, or business insights."
+        ),
+        "reply": (
+            "I'm not sure what you need yet. Try a short ask like "
+            "“total sales by region”, “bar chart of profit by category”, "
+            "or “forecast next month sales”."
+        ),
     },
 }

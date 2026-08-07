@@ -66,6 +66,7 @@ class VisualizationEngine:
             dimensions=dimensions,
             aggregation=request.aggregation,
             limit=request.limit,
+            sort_order=request.sort_order,
         )
         if chart_df.empty:
             raise VisualizationEngineError("No data available for visualization")
@@ -93,6 +94,7 @@ class VisualizationEngine:
             "dimensions": dimensions,
             "filters": [f.model_dump() for f in filters],
             "aggregation": request.aggregation,
+            "sort_order": request.sort_order,
             "limit": request.limit,
             "encoding": encoding,
             "row_count_plotted": int(len(chart_df)),
@@ -121,6 +123,7 @@ class VisualizationEngine:
         dimensions: list[str],
         aggregation: AggregateFunc,
         limit: int,
+        sort_order: str = "desc",
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         if chart_type == "scatter":
             return self._prepare_scatter(frame, metrics, dimensions, limit)
@@ -132,6 +135,7 @@ class VisualizationEngine:
                 aggregation=aggregation,
                 limit=limit,
                 require_dimension=True,
+                sort_order=sort_order,
             )
         # bar / line
         return self._prepare_aggregated(
@@ -141,6 +145,7 @@ class VisualizationEngine:
             aggregation=aggregation,
             limit=limit,
             require_dimension=True,
+            sort_order=sort_order,
         )
 
     def _prepare_aggregated(
@@ -152,6 +157,7 @@ class VisualizationEngine:
         aggregation: AggregateFunc,
         limit: int,
         require_dimension: bool,
+        sort_order: str = "desc",
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         if require_dimension and not dimensions:
             raise VisualizationEngineError(
@@ -177,7 +183,8 @@ class VisualizationEngine:
         )
         value_col = f"{metric}_{aggregation}"
         grouped = grouped.rename(columns={metric: value_col})
-        grouped = grouped.sort_values(value_col, ascending=False).head(limit)
+        ascending = str(sort_order).lower() == "asc"
+        grouped = grouped.sort_values(value_col, ascending=ascending).head(limit)
 
         encoding = {"x": dimension, "y": value_col, "names": dimension, "values": value_col}
         return grouped, encoding

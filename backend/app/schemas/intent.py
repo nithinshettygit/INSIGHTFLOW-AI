@@ -33,6 +33,11 @@ class IntentDetectRequest(BaseModel):
         default=None,
         description="Optional dataset context for LLM routing.",
     )
+    session_id: str | None = Field(
+        default=None,
+        description="Chat session id for in-memory LangGraph conversation continuity.",
+        max_length=128,
+    )
 
 
 class EnginePass(BaseModel):
@@ -73,6 +78,12 @@ class IntentDetectResponse(BaseModel):
     rationale: str | None = None
     entities: dict[str, Any] = Field(default_factory=dict)
     dataset_id: str | None = None
+    session_id: str | None = None
+    reply: str | None = Field(
+        default=None,
+        description="Short assistant reply for unknown/none intents.",
+    )
+    memory_applied: bool = False
     routing: RoutingInfo
     orchestration: OrchestrationInfo
 

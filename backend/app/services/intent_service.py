@@ -1,4 +1,4 @@
-"""Intent detection application service (LangGraph + Groq)."""
+"""Intent detection application service (LangGraph + Groq + session memory)."""
 
 from __future__ import annotations
 
@@ -57,16 +57,20 @@ class IntentService:
         if not query:
             raise IntentServiceError("Query must not be empty")
 
+        session_id = (request.session_id or "").strip() or None
+        thread_id = session_id or "anonymous"
+
         result = self.graph.invoke(
             {
                 "query": query,
                 "dataset_id": request.dataset_id,
+                "session_id": session_id,
                 "nodes_executed": [],
-            }
+            },
+            config={"configurable": {"thread_id": thread_id}},
         )
 
         if result.get("error"):
-            # Context/dataset errors surface as 404/400 from graph load step.
             message = str(result["error"])
             status = 404 if "not found" in message.lower() else 400
             raise IntentServiceError(message, status_code=status)
@@ -85,15 +89,20 @@ class IntentService:
             graph="intent_router",
             provider=str(result.get("provider") or "unknown"),
             nodes_executed=list(result.get("nodes_executed") or []),
-            context=dict(result.get("context") or {}),
+            context={
+                **dict(result.get("context") or {}),
+                "memory": dict(result.get("memory") or {}),
+                "memory_applied": bool(result.get("memory_applied")),
+            },
         )
 
         logger.info(
-            "Intent service complete provider=%s intent=%s engine=%s nodes=%s",
+            "Intent service complete provider=%s intent=%s engine=%s session=%s memory=%s",
             orchestration.provider,
             result.get("intent"),
             routing.engine,
-            orchestration.nodes_executed,
+            session_id,
+            result.get("memory_applied"),
         )
 
         return IntentDetectResponse(
@@ -105,6 +114,9 @@ class IntentService:
             rationale=result.get("rationale"),
             entities=dict(result.get("entities") or {}),
             dataset_id=request.dataset_id,
+            session_id=session_id,
+            reply=result.get("reply"),
+            memory_applied=bool(result.get("memory_applied")),
             routing=routing,
             orchestration=orchestration,
         )

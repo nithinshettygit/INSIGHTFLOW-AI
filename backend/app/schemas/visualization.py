@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from app.schemas.analytics import AggregateFunc, FilterSpec
 
 ChartType = Literal["bar", "line", "pie", "scatter"]
+SortOrder = Literal["asc", "desc"]
 
 
 class VisualizationRequest(BaseModel):
@@ -21,6 +22,10 @@ class VisualizationRequest(BaseModel):
     )
     filters: list[FilterSpec] = Field(default_factory=list)
     aggregation: AggregateFunc = "sum"
+    sort_order: SortOrder = Field(
+        default="desc",
+        description="Sort aggregated chart values ascending (lowest) or descending (highest).",
+    )
     limit: int = Field(default=50, ge=1, le=500)
     title: str | None = None
 

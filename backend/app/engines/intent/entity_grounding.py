@@ -19,6 +19,24 @@ ALLOWED_CHART_TYPES = {
     "box",
 }
 
+# Object-dtype measure columns (e.g. sales stored as strings) still act as metrics.
+_MEASURE_NAMES = {
+    "sales",
+    "profit",
+    "quantity",
+    "discount",
+    "shipping_cost",
+    "shippingcost",
+    "revenue",
+    "amount",
+    "price",
+    "cost",
+    "income",
+    "margin",
+    "units",
+    "qty",
+}
+
 
 def role_hint_from_dtype(dtype: str) -> str:
     text = (dtype or "").lower()
@@ -29,6 +47,13 @@ def role_hint_from_dtype(dtype: str) -> str:
     if any(token in text for token in ("datetime", "date", "time")):
         return "datetime"
     return "categorical"
+
+
+def is_measure_column(name: str, role_hint: str | None = None) -> bool:
+    """True for numeric roles or common KPI column names (even if dtype is object)."""
+    if (role_hint or "").lower() == "numeric":
+        return True
+    return normalize_column_name(str(name or "")) in _MEASURE_NAMES
 
 
 def build_schema_columns(profile_columns: list[Any] | None) -> list[dict[str, str]]:
@@ -45,11 +70,14 @@ def build_schema_columns(profile_columns: list[Any] | None) -> list[dict[str, st
             continue
         if not name:
             continue
+        role = role_hint_from_dtype(dtype)
+        if role == "categorical" and is_measure_column(name, role):
+            role = "numeric"
         schema.append(
             {
                 "name": name,
                 "dtype": dtype,
-                "role_hint": role_hint_from_dtype(dtype),
+                "role_hint": role,
             }
         )
     return schema
@@ -97,6 +125,21 @@ def ground_entities(
             "dropped": dropped,
         },
     }
+
+    # Never group by a KPI/measure column (sales stored as object still counts).
+    measure_dims = [
+        name
+        for name in grounded["dimensions"]
+        if is_measure_column(name, "categorical")
+    ]
+    if measure_dims:
+        for name in measure_dims:
+            if name not in grounded["metrics"]:
+                grounded["metrics"].append(name)
+        grounded["dimensions"] = [
+            name for name in grounded["dimensions"] if name not in measure_dims
+        ]
+        logger.info("Moved measure columns out of dimensions: %s", measure_dims)
 
     if dropped:
         logger.info("Dropped ungrounded entity refs: %s", dropped)

@@ -41,7 +41,13 @@ export default function ChatPanel({
           >
             <div className="whitespace-pre-wrap">{message.content}</div>
             {message.meta && (
-              <div className="mt-2 border-t border-white/20 pt-2 text-xs opacity-80">
+              <div
+                className={`mt-2 border-t pt-2 text-xs font-medium ${
+                  message.role === "user"
+                    ? "border-white/30 text-white"
+                    : "border-line text-ink"
+                }`}
+              >
                 {message.meta}
               </div>
             )}

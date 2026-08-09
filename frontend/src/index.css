@@ -5,18 +5,18 @@
 @tailwind utilities;
 
 :root {
-  --ink: #0b1f33;
-  --muted: #5a6d7c;
-  --accent: #0e7490;
-  --accent-deep: #0a5c72;
-  --accent-soft: #d9f0f5;
-  --panel: rgba(255, 255, 255, 0.86);
-  --line: #c5d4de;
-  --soft: #eef4f8;
-  --bg-a: #dce8f0;
-  --bg-b: #f4f7fa;
-  --warn: #b45309;
-  --online: #0f766e;
+  --ink: #071521;
+  --muted: #2f4556;
+  --accent: #0b6580;
+  --accent-deep: #084d62;
+  --accent-soft: #cce9f1;
+  --panel: rgba(255, 255, 255, 0.94);
+  --line: #9eb2c0;
+  --soft: #e7eef4;
+  --bg-a: #d3e2ec;
+  --bg-b: #eef3f7;
+  --warn: #9a3412;
+  --online: #0b5f56;
 }
 
 * {
@@ -105,11 +105,11 @@ body::before {
   gap: 0.35rem;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.72);
-  padding: 0.2rem 0.65rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--muted);
+  background: #ffffff;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .status-dot {

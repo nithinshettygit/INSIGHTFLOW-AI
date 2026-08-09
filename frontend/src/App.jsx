@@ -351,7 +351,7 @@ export default function App() {
               <h1 className="brand-mark truncate font-display text-[1.65rem] font-extrabold text-ink sm:text-3xl md:text-[2.05rem]">
                 InsightFlow AI
               </h1>
-              <p className="mt-1 text-[11px] font-medium tracking-[0.04em] text-muted md:text-sm">
+              <p className="mt-1 text-[11px] font-semibold tracking-[0.02em] text-ink/80 md:text-sm">
                 Business intelligence · ask data, charts, forecasts & insights
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2 sm:hidden">

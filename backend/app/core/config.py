@@ -59,6 +59,14 @@ class Settings(BaseSettings):
 
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     max_upload_size_mb: int = Field(default=25, alias="MAX_UPLOAD_SIZE_MB")
+    # Comma-separated browser origins allowed for CORS (Netlify/Vercel URLs).
+    cors_origins: str = Field(
+        default=(
+            "http://localhost:5173,http://127.0.0.1:5173,"
+            "http://localhost:3000,http://127.0.0.1:3000"
+        ),
+        alias="CORS_ORIGINS",
+    )
 
     # RAG (Phase 8)
     rag_chunk_size: int = Field(default=800, alias="RAG_CHUNK_SIZE")

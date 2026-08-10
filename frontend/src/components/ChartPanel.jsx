@@ -6,11 +6,11 @@ export default function ChartPanel({ chart, emptyHint, compact = false }) {
   return (
     <section className="panel flex h-full min-h-0 flex-col overflow-hidden rounded-2xl">
       <div
-        className={`shrink-0 border-b border-line px-4 md:px-5 ${
+        className={`panel-header shrink-0 border-b border-line px-4 md:px-5 ${
           compact ? "py-2.5" : "py-4"
         }`}
       >
-        <h2 className="font-display text-base tracking-tight md:text-lg">
+        <h2 className="font-display text-base tracking-tight text-ink md:text-lg">
           {chart?.title || "Visualization"}
         </h2>
         <p className="mt-0.5 text-xs text-muted md:text-sm">
@@ -29,9 +29,17 @@ export default function ChartPanel({ chart, emptyHint, compact = false }) {
               autosize: true,
               paper_bgcolor: "rgba(0,0,0,0)",
               plot_bgcolor: "rgba(0,0,0,0)",
+              colorway: [
+                "#0f766e",
+                "#1e3a5f",
+                "#b08d57",
+                "#047857",
+                "#64748b",
+                "#8c6b3a",
+              ],
               font: {
                 family: "Manrope, sans-serif",
-                color: "#12202a",
+                color: "#06101c",
                 size: compact ? 11 : 12,
               },
               margin: compact

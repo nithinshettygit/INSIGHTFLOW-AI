@@ -42,7 +42,7 @@ export default function ProfileCard({ profile, source }) {
         {stats.map((item) => (
           <div
             key={item.label}
-            className="rounded-xl bg-white/80 px-3 py-2.5 ring-1 ring-line"
+            className="stat-tile rounded-xl px-3 py-2.5"
           >
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted">
               {item.label}

@@ -5,18 +5,32 @@
 @tailwind utilities;
 
 :root {
-  --ink: #071521;
-  --muted: #2f4556;
-  --accent: #0b6580;
-  --accent-deep: #084d62;
-  --accent-soft: #cce9f1;
-  --panel: rgba(255, 255, 255, 0.94);
-  --line: #9eb2c0;
-  --soft: #e7eef4;
-  --bg-a: #d3e2ec;
-  --bg-b: #eef3f7;
-  --warn: #9a3412;
-  --online: #0b5f56;
+  /* Executive Mist — premium light BI (ink + champagne + teal CTAs) */
+  --ink: #06101c;
+  --muted: #4a5d6e;
+  --accent: #0f766e;
+  --accent-deep: #115e59;
+  --accent-soft: #d5f5f0;
+  --signal: #1e3a5f;
+  --signal-soft: #e8eef4;
+  --champagne: #b08d57;
+  --champagne-deep: #8c6b3a;
+  --platinum: #f4f7fa;
+  --platinum-deep: #e8eef4;
+  --mist-a: #9aa8b8;
+  --mist-b: #c5d0db;
+  --mist-c: #eef2f6;
+  --highlight: #b08d57;
+  --panel: rgba(244, 247, 250, 0.92);
+  --panel-strong: rgba(255, 255, 255, 0.78);
+  --line: #a8b6c4;
+  --soft: #e8eef4;
+  --bg-a: #9aa8b8;
+  --bg-b: #c5d0db;
+  --bg-c: #eef2f6;
+  --warn: #c2410c;
+  --online: #047857;
+  --user-bubble: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
 }
 
 * {
@@ -34,9 +48,11 @@ body {
   color: var(--ink);
   font-family: Manrope, sans-serif;
   background:
-    radial-gradient(1100px 560px at 8% -8%, rgba(14, 116, 144, 0.2), transparent 58%),
-    radial-gradient(800px 420px at 96% 4%, rgba(15, 118, 110, 0.1), transparent 52%),
-    linear-gradient(165deg, var(--bg-a) 0%, var(--bg-b) 55%, #eef2f6 100%);
+    radial-gradient(1100px 560px at 8% -10%, rgba(176, 141, 87, 0.12), transparent 52%),
+    radial-gradient(900px 480px at 4% 0%, rgba(30, 58, 95, 0.18), transparent 58%),
+    radial-gradient(700px 400px at 96% 8%, rgba(154, 168, 184, 0.35), transparent 50%),
+    radial-gradient(640px 360px at 80% 100%, rgba(15, 118, 110, 0.08), transparent 55%),
+    linear-gradient(160deg, var(--mist-a) 0%, var(--mist-b) 40%, var(--mist-c) 100%);
   background-attachment: fixed;
 }
 
@@ -56,6 +72,16 @@ body {
   }
 }
 
+@keyframes rail-shine {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.12);
+  }
+}
+
 .scroll-cue {
   animation: scroll-cue-pulse 1.4s ease-in-out infinite;
 }
@@ -71,32 +97,98 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.28;
+  opacity: 0.16;
   background-image:
-    linear-gradient(rgba(11, 31, 51, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(11, 31, 51, 0.035) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(rgba(6, 16, 28, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 16, 28, 0.045) 1px, transparent 1px);
+  background-size: 28px 28px;
   mask-image: linear-gradient(to bottom, black, transparent 88%);
 }
 
 .panel {
   background: var(--panel);
-  border: 1px solid var(--line);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 16px 36px rgba(11, 31, 51, 0.07);
+  border: 1px solid color-mix(in srgb, var(--line) 70%, white);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 16px 36px rgba(6, 16, 28, 0.08);
+}
+
+/* Premium title bar — platinum glass + champagne edge */
+.title-bar {
+  display: flex;
+  align-items: center;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      var(--platinum) 48%,
+      var(--platinum-deep) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--line) 55%, white);
+  border-bottom: 1.5px solid color-mix(in srgb, var(--champagne) 45%, var(--line));
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 14px 32px rgba(6, 16, 28, 0.1);
+}
+
+.panel-header {
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--platinum) 90%, white) 0%,
+    color-mix(in srgb, var(--platinum-deep) 70%, white) 100%
+  );
+}
+
+.panel-header-results {
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--signal-soft) 95%, white) 0%,
+    color-mix(in srgb, var(--platinum) 80%, white) 100%
+  );
+}
+
+.panel-header-chat {
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--platinum) 85%, var(--accent-soft)) 0%,
+    color-mix(in srgb, var(--platinum-deep) 90%, white) 100%
+  );
 }
 
 .brand-mark {
   letter-spacing: -0.045em;
   line-height: 1.05;
+  background: linear-gradient(
+    115deg,
+    var(--ink) 0%,
+    #1a2a3c 42%,
+    var(--champagne-deep) 78%,
+    var(--champagne) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-tagline {
+  color: var(--muted);
+  letter-spacing: 0.04em;
 }
 
 .brand-rail {
-  width: 4px;
+  width: 5px;
   align-self: stretch;
   min-height: 2.75rem;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--accent) 0%, var(--online) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--ink) 0%,
+    var(--champagne-deep) 55%,
+    var(--champagne) 100%
+  );
+  animation: rail-shine 4.5s ease-in-out infinite;
 }
 
 .status-pill {
@@ -104,8 +196,8 @@ body::before {
   align-items: center;
   gap: 0.35rem;
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: #ffffff;
+  border: 1px solid color-mix(in srgb, var(--champagne) 35%, var(--line));
+  background: color-mix(in srgb, white 78%, var(--platinum-deep));
   padding: 0.25rem 0.7rem;
   font-size: 0.75rem;
   font-weight: 700;
@@ -121,7 +213,32 @@ body::before {
 
 .status-dot.is-online {
   background: var(--online);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18);
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.2);
+}
+
+.bubble-user {
+  background: var(--user-bubble);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(15, 118, 110, 0.26);
+}
+
+.bubble-assistant {
+  background: color-mix(in srgb, white 90%, var(--platinum-deep));
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--line) 65%, white);
+}
+
+.stat-tile {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, white 92%, var(--platinum)) 0%,
+    color-mix(in srgb, white 88%, var(--platinum-deep)) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--line) 60%, white);
+}
+
+.composer {
+  background: color-mix(in srgb, white 82%, var(--platinum-deep));
 }
 
 .chat-scroll::-webkit-scrollbar,
@@ -131,6 +248,6 @@ body::before {
 
 .chat-scroll::-webkit-scrollbar-thumb,
 .side-scroll::-webkit-scrollbar-thumb {
-  background: #a8bac6;
+  background: color-mix(in srgb, var(--mist-a) 55%, #64748b);
   border-radius: 8px;
 }

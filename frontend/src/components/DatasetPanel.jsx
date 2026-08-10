@@ -11,9 +11,9 @@ export default function DatasetPanel({
 }) {
   return (
     <aside className="panel flex h-full flex-col overflow-hidden rounded-2xl shadow-xl">
-      <div className="flex items-start justify-between gap-2 border-b border-line px-4 py-4 md:px-5">
+      <div className="flex items-start justify-between gap-2 border-b border-line panel-header px-4 py-4 md:px-5">
         <div>
-          <h2 className="font-display text-lg font-bold tracking-tight">Datasets</h2>
+          <h2 className="font-display text-lg font-bold tracking-tight text-ink">Datasets</h2>
           <p className="mt-1 text-sm text-muted">
             Upload CSV, Excel, or PDF. Profiling runs automatically.
           </p>

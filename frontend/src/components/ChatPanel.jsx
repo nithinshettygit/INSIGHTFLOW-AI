@@ -16,7 +16,7 @@ export default function ChatPanel({
 
   return (
     <section className="panel flex h-full min-h-0 flex-col overflow-hidden rounded-2xl">
-      <div className="shrink-0 border-b border-line bg-accent-soft/40 px-4 py-3 md:px-5">
+      <div className="panel-header-chat shrink-0 border-b border-line px-4 py-3 md:px-5">
         <h2 className="font-display text-lg tracking-tight text-ink">Ask InsightFlow</h2>
         <p className="mt-1 text-xs text-muted md:text-sm">
           Ask for KPIs, charts, forecasts, document QA, or insights.
@@ -25,7 +25,7 @@ export default function ChatPanel({
 
       <div className="chat-scroll min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3 md:px-4">
         {messages.length === 0 && (
-          <div className="rounded-xl bg-soft/80 px-4 py-3 text-sm text-muted">
+          <div className="rounded-xl bg-soft/90 px-4 py-3 text-sm text-muted ring-1 ring-line/70">
             Try: “Bar chart of sales by region”, “Forecast next month sales”, or
             “Why is profit uneven across regions?”
           </div>
@@ -34,9 +34,7 @@ export default function ChatPanel({
           <div
             key={message.id}
             className={`max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-              message.role === "user"
-                ? "ml-auto bg-accent text-white"
-                : "bg-white/80 text-ink ring-1 ring-line"
+              message.role === "user" ? "bubble-user ml-auto" : "bubble-assistant"
             }`}
           >
             <div className="whitespace-pre-wrap">{message.content}</div>
@@ -54,7 +52,7 @@ export default function ChatPanel({
           </div>
         ))}
         {busy && (
-          <div className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-muted ring-1 ring-line">
+          <div className="bubble-assistant rounded-2xl px-4 py-3 text-sm text-muted">
             Routing and running engines…
           </div>
         )}
@@ -62,7 +60,7 @@ export default function ChatPanel({
       </div>
 
       <form
-        className="shrink-0 border-t border-line bg-white/70 p-3 backdrop-blur md:p-4"
+        className="composer shrink-0 border-t border-line p-3 backdrop-blur md:p-4"
         onSubmit={(event) => {
           event.preventDefault();
           onSubmit();
@@ -76,12 +74,12 @@ export default function ChatPanel({
             placeholder={
               disabled ? "Select a dataset first" : "Ask a business question…"
             }
-            className="min-w-0 flex-1 rounded-xl border border-line bg-white px-3 py-3 text-sm outline-none ring-accent focus:ring-2"
+            className="min-w-0 flex-1 rounded-xl border border-line bg-white/90 px-3 py-3 text-sm outline-none ring-accent focus:ring-2"
           />
           <button
             type="submit"
             disabled={disabled || busy || !query.trim()}
-            className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-deep)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-50"
           >
             Send
           </button>

@@ -351,14 +351,14 @@ export default function App() {
       {/* Page 1: Results + Chat */}
       <section className="relative flex h-dvh max-h-dvh flex-col overflow-hidden px-3 py-3 md:px-5 md:py-4">
         <header className="mx-auto w-full max-w-[1500px] shrink-0">
-          <div className="panel flex items-center gap-3 rounded-2xl px-3 py-3.5 md:gap-4 md:px-5 md:py-4">
+          <div className="title-bar gap-3 rounded-2xl px-3 py-3.5 md:gap-4 md:px-5 md:py-4">
             <div className="brand-rail shrink-0" aria-hidden />
 
             <div className="min-w-0 flex-1">
-              <h1 className="brand-mark truncate font-display text-[1.65rem] font-extrabold text-ink sm:text-3xl md:text-[2.05rem]">
+              <h1 className="brand-mark truncate font-display text-[1.65rem] font-extrabold sm:text-3xl md:text-[2.05rem]">
                 InsightFlow AI
               </h1>
-              <p className="mt-1 text-[11px] font-semibold tracking-[0.02em] text-ink/80 md:text-sm">
+              <p className="brand-tagline mt-1 text-[11px] font-semibold md:text-sm">
                 Business intelligence · ask data, charts, forecasts & insights
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2 sm:hidden">
@@ -416,7 +416,7 @@ export default function App() {
           </div>
 
           {error && (
-            <div className="mt-2 rounded-xl border border-[var(--warn)]/30 bg-[#fff7ed] px-4 py-2.5 text-sm text-[var(--warn)]">
+            <div className="mt-2 rounded-xl border border-warn/30 bg-[#fff7ed] px-4 py-2.5 text-sm text-warn">
               {error}
               <button
                 type="button"
@@ -484,7 +484,7 @@ export default function App() {
           <button
             type="button"
             onClick={scrollToVisualization}
-            className="scroll-cue pointer-events-auto inline-flex items-center gap-2 rounded-full border border-accent/35 bg-white/95 px-4 py-2.5 text-sm font-semibold text-accent-deep shadow-lg backdrop-blur transition hover:border-accent hover:bg-accent-soft"
+            className="scroll-cue pointer-events-auto inline-flex items-center gap-2 rounded-full border border-champagne/40 bg-platinum/95 px-4 py-2.5 text-sm font-semibold text-ink shadow-lg backdrop-blur transition hover:border-accent hover:bg-accent hover:text-white"
           >
             <span className="scroll-cue-arrow" aria-hidden>
               ↓
@@ -518,7 +518,7 @@ export default function App() {
               onClick={() =>
                 window.scrollTo({ top: 0, behavior: "smooth" })
               }
-              className="shrink-0 rounded-full border border-line bg-white/90 px-3 py-2 text-xs font-semibold text-muted transition hover:border-accent hover:bg-accent-soft hover:text-accent-deep"
+              className="shrink-0 rounded-full border border-line bg-platinum/95 px-3 py-2 text-xs font-semibold text-muted transition hover:border-champagne hover:bg-platinum-deep hover:text-ink"
             >
               ↑ Back to Results
             </button>

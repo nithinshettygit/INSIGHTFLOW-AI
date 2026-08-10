@@ -26,7 +26,7 @@ export default function ResultsPanel({
 
   return (
     <section className="panel flex h-full min-h-0 flex-col overflow-hidden rounded-2xl">
-      <div className="shrink-0 border-b border-line bg-soft/70 px-4 py-3 md:px-5 md:py-4">
+      <div className="panel-header-results shrink-0 border-b border-line px-4 py-3 md:px-5 md:py-4">
         <h2 className="font-display text-lg tracking-tight text-ink">Results</h2>
         <p className="mt-1 text-sm text-muted">
           Profile, analytics, ML outputs, RAG sources, and routing details.
@@ -35,8 +35,8 @@ export default function ResultsPanel({
 
       <div className="side-scroll min-h-0 flex-1 space-y-4 overflow-y-auto p-4 text-sm">
         {intent && (
-          <div className="rounded-xl bg-soft/80 p-3">
-            <div className="font-semibold">Last intent</div>
+          <div className="rounded-xl bg-platinum-deep/90 p-3 ring-1 ring-champagne/25">
+            <div className="font-semibold text-ink">Last intent</div>
             <div className="mt-1 text-muted">
               {intent.intent} → {intent.target_engine} ({intent.orchestration?.provider})
               {intent.confidence != null ? ` · ${(intent.confidence * 100).toFixed(0)}%` : ""}

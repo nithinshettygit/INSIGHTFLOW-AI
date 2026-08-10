@@ -25,50 +25,42 @@ export default function ProfileCard({ profile, source }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-end justify-between gap-2">
-        <div>
-          <div className="font-semibold text-ink">Dataset profile</div>
-          <p className="mt-0.5 text-xs text-muted">
-            {profile.dataset_type?.toUpperCase() || "DATA"}
-            {source ? ` · ${source}` : ""}
-            {profile.profiled_at
-              ? ` · ${new Date(profile.profiled_at).toLocaleString()}`
-              : ""}
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="badge badge-neutral">Profile</span>
+        <span className="section-label">Dataset profile</span>
       </div>
+      <p className="text-xs text-muted">
+        {profile.dataset_type?.toUpperCase() || "DATA"}
+        {source ? ` · ${source}` : ""}
+        {profile.profiled_at
+          ? ` · ${new Date(profile.profiled_at).toLocaleString()}`
+          : ""}
+      </p>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {stats.map((item) => (
-          <div
-            key={item.label}
-            className="stat-tile rounded-xl px-3 py-2.5"
-          >
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-              {item.label}
-            </div>
-            <div className="mt-1 font-display text-lg font-bold text-ink tabular-nums">
-              {item.value}
-            </div>
+          <div key={item.label} className="stat-tile rounded-[10px] px-3 py-2.5">
+            <div className="kpi-label">{item.label}</div>
+            <div className="kpi-value mt-1 text-lg">{item.value}</div>
           </div>
         ))}
       </div>
 
       {isPdf && (
-        <div className="rounded-xl bg-soft/80 px-3 py-2 text-xs text-muted">
+        <div className="rounded-[12px] border border-line bg-soft px-3 py-2 text-xs text-muted">
           {note ||
             "PDF document profile. Ask document questions to use RAG search."}
         </div>
       )}
 
       {!isPdf && columns.length > 0 && (
-        <div className="overflow-hidden rounded-xl ring-1 ring-line">
-          <div className="border-b border-line bg-soft/80 px-3 py-2 text-xs font-semibold text-ink">
+        <div className="overflow-hidden rounded-[12px] border border-line">
+          <div className="border-b border-line bg-soft px-3 py-2 text-xs font-semibold text-ink">
             Columns ({columns.length})
           </div>
           <div className="max-h-56 overflow-auto">
             <table className="min-w-full text-left text-xs">
-              <thead className="sticky top-0 bg-white/95">
+              <thead className="sticky top-0 bg-white">
                 <tr className="text-muted">
                   <th className="px-3 py-2 font-semibold">Name</th>
                   <th className="px-3 py-2 font-semibold">Type</th>
@@ -79,7 +71,7 @@ export default function ProfileCard({ profile, source }) {
               </thead>
               <tbody>
                 {columns.map((col) => (
-                  <tr key={col.name} className="border-t border-line bg-white/70">
+                  <tr key={col.name} className="border-t border-line bg-white">
                     <td className="px-3 py-2 font-semibold text-ink">{col.name}</td>
                     <td className="px-3 py-2">
                       <TypeBadge dtype={col.dtype} />
@@ -108,15 +100,11 @@ function TypeBadge({ dtype }) {
   const label = shortDtype(dtype);
   const tone =
     label === "number"
-      ? "bg-accent/10 text-accent"
+      ? "badge-success"
       : label === "date"
-        ? "bg-[#9a5b1d]/10 text-[var(--warn)]"
-        : "bg-soft text-muted";
-  return (
-    <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase ${tone}`}>
-      {label}
-    </span>
-  );
+        ? "badge-warn"
+        : "badge-neutral";
+  return <span className={`badge ${tone}`}>{label}</span>;
 }
 
 function NullBar({ percent, count }) {
@@ -127,9 +115,9 @@ function NullBar({ percent, count }) {
         <span>{pct.toFixed(1)}%</span>
         <span>{formatNumber(count)}</span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-soft">
+      <div className="h-1.5 overflow-hidden rounded-full bg-line">
         <div
-          className={`h-full rounded-full ${pct > 20 ? "bg-[var(--warn)]" : "bg-accent"}`}
+          className={`h-full rounded-full ${pct > 20 ? "bg-warn" : "bg-accent"}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -173,6 +161,8 @@ function formatNumber(value) {
 function formatCompact(value) {
   if (value == null || Number.isNaN(Number(value))) return "—";
   const num = Number(value);
-  if (Math.abs(num) >= 1000) return num.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (Math.abs(num) >= 1000) {
+    return num.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  }
   return Number.isInteger(num) ? String(num) : num.toFixed(2);
 }

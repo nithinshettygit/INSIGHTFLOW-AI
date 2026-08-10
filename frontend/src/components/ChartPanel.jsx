@@ -1,16 +1,37 @@
 import Plot from "react-plotly.js";
 
+const CHART_COLORWAY = [
+  "#059669",
+  "#F59E0B",
+  "#C026D3",
+  "#34D399",
+  "#FBBF24",
+  "#E879F9",
+];
+
 export default function ChartPanel({ chart, emptyHint, compact = false }) {
   const figure = chart?.plotly_figure;
+  const isMl =
+    chart?.chart_type === "forecast" ||
+    chart?.chart_type === "segmentation" ||
+    chart?.chart_type === "anomaly";
 
   return (
-    <section className="panel flex h-full min-h-0 flex-col overflow-hidden rounded-2xl">
+    <section className="panel flex h-full min-h-0 flex-col overflow-hidden rounded-[12px]">
       <div
-        className={`panel-header shrink-0 border-b border-line px-4 md:px-5 ${
+        className={`shrink-0 border-b border-line bg-white px-4 md:px-5 ${
           compact ? "py-2.5" : "py-4"
         }`}
       >
-        <h2 className="font-display text-base tracking-tight text-ink md:text-lg">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`badge ${isMl ? "badge-ai" : "badge-success"}`}>
+            {isMl ? "ML chart" : "Visualization"}
+          </span>
+          {chart?.chart_type && (
+            <span className="badge badge-neutral">{chart.chart_type}</span>
+          )}
+        </div>
+        <h2 className="mt-2 font-display text-base font-semibold tracking-tight text-ink md:text-lg">
           {chart?.title || "Visualization"}
         </h2>
         <p className="mt-0.5 text-xs text-muted md:text-sm">
@@ -20,27 +41,34 @@ export default function ChartPanel({ chart, emptyHint, compact = false }) {
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-2 md:p-3">
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-soft/60 p-2 md:p-3">
         {figure ? (
           <Plot
-            data={figure.data}
+            data={(figure.data || []).map((trace, index) =>
+              restyleTrace(trace, index, isMl),
+            )}
             layout={{
               ...figure.layout,
               autosize: true,
-              paper_bgcolor: "rgba(0,0,0,0)",
-              plot_bgcolor: "rgba(0,0,0,0)",
-              colorway: [
-                "#0f766e",
-                "#1e3a5f",
-                "#b08d57",
-                "#047857",
-                "#64748b",
-                "#8c6b3a",
-              ],
+              paper_bgcolor: "#FAF9F6",
+              plot_bgcolor: "#FAF9F6",
+              colorway: CHART_COLORWAY,
               font: {
-                family: "Manrope, sans-serif",
-                color: "#06101c",
+                family: "Manrope, system-ui, sans-serif",
+                color: "#18181B",
                 size: compact ? 11 : 12,
+              },
+              xaxis: {
+                ...(figure.layout?.xaxis || {}),
+                gridcolor: "#E4E4E7",
+                zerolinecolor: "#E4E4E7",
+                linecolor: "#E4E4E7",
+              },
+              yaxis: {
+                ...(figure.layout?.yaxis || {}),
+                gridcolor: "#E4E4E7",
+                zerolinecolor: "#E4E4E7",
+                linecolor: "#E4E4E7",
               },
               margin: compact
                 ? { l: 36, r: 12, t: 20, b: 32 }
@@ -63,4 +91,22 @@ export default function ChartPanel({ chart, emptyHint, compact = false }) {
       </div>
     </section>
   );
+}
+
+function restyleTrace(trace, index, isMl) {
+  const name = String(trace?.name || "").toLowerCase();
+  const next = { ...trace };
+  if (isMl && (name.includes("forecast") || name.includes("predict"))) {
+    next.line = { ...(trace.line || {}), color: "#C026D3", dash: "dash" };
+    next.marker = { ...(trace.marker || {}), color: "#C026D3" };
+  } else if (isMl && (name.includes("history") || name.includes("actual"))) {
+    next.line = { ...(trace.line || {}), color: "#059669" };
+    next.marker = { ...(trace.marker || {}), color: "#059669" };
+  } else if (!trace.marker?.color && !trace.line?.color) {
+    next.marker = {
+      ...(trace.marker || {}),
+      color: CHART_COLORWAY[index % CHART_COLORWAY.length],
+    };
+  }
+  return next;
 }

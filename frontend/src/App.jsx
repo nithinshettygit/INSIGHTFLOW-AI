@@ -351,37 +351,39 @@ export default function App() {
       {/* Page 1: Results + Chat */}
       <section className="relative flex h-dvh max-h-dvh flex-col overflow-hidden px-3 py-3 md:px-5 md:py-4">
         <header className="mx-auto w-full max-w-[1500px] shrink-0">
-          <div className="title-bar gap-3 rounded-2xl px-3 py-3.5 md:gap-4 md:px-5 md:py-4">
-            <div className="brand-rail shrink-0" aria-hidden />
+          <div className="title-bar gap-3 rounded-[14px] px-3 py-3.5 md:gap-4 md:px-5 md:py-4">
+            <div className="brand-spark" aria-hidden>
+              <SparkIcon />
+            </div>
 
             <div className="min-w-0 flex-1">
-              <h1 className="brand-mark truncate font-display text-[1.65rem] font-extrabold sm:text-3xl md:text-[2.05rem]">
-                InsightFlow AI
+              <h1 className="brand-mark truncate font-display text-[1.55rem] font-extrabold sm:text-3xl md:text-[2rem]">
+                InsightFlow <span className="brand-ai">AI</span>
               </h1>
-              <p className="brand-tagline mt-1 text-[11px] font-semibold md:text-sm">
+              <p className="brand-tagline mt-1 text-[11px] font-medium md:text-sm">
                 Business intelligence · ask data, charts, forecasts & insights
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2 sm:hidden">
-                <span className="status-pill">
+                <span className={`status-pill badge ${apiStatus === "online" ? "badge-api" : "badge-error"}`}>
                   <span
                     className={`status-dot ${apiStatus === "online" ? "is-online" : ""}`}
                   />
                   API {apiStatus}
                 </span>
-                <span className="status-pill max-w-[12rem] truncate">
+                <span className="status-pill badge badge-dataset max-w-[12rem] truncate">
                   {selectedDataset?.original_filename || "No dataset"}
                 </span>
               </div>
             </div>
 
-            <div className="hidden shrink-0 items-end gap-2 sm:flex sm:flex-col">
-              <span className="status-pill">
+            <div className="hidden shrink-0 items-center gap-2 sm:flex">
+              <span className={`status-pill badge ${apiStatus === "online" ? "badge-api" : "badge-error"}`}>
                 <span
                   className={`status-dot ${apiStatus === "online" ? "is-online" : ""}`}
                 />
                 API {apiStatus}
               </span>
-              <span className="status-pill max-w-[240px] truncate" title={selectedDataset?.original_filename || ""}>
+              <span className="status-pill badge badge-dataset max-w-[220px] truncate" title={selectedDataset?.original_filename || ""}>
                 {selectedDataset?.original_filename || "No dataset selected"}
               </span>
             </div>
@@ -391,10 +393,10 @@ export default function App() {
               aria-label={datasetsOpen ? "Close datasets menu" : "Open datasets menu"}
               aria-expanded={datasetsOpen}
               onClick={() => setDatasetsOpen((open) => !open)}
-              className={`inline-flex h-12 shrink-0 items-center gap-2.5 rounded-xl border px-3.5 text-sm font-semibold transition ${
+              className={`inline-flex h-11 shrink-0 items-center gap-2.5 rounded-xl px-3.5 text-sm font-semibold transition ${
                 datasetsOpen
-                  ? "border-accent-deep bg-accent text-white shadow-md"
-                  : "border-accent/40 bg-accent-soft text-accent-deep hover:border-accent hover:bg-accent hover:text-white"
+                  ? "border border-accent-deep bg-accent text-white"
+                  : "btn-mint"
               }`}
             >
               <HamburgerIcon open={datasetsOpen} light={datasetsOpen} />
@@ -406,7 +408,7 @@ export default function App() {
                   className={`inline-flex min-w-[1.35rem] items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${
                     datasetsOpen
                       ? "bg-white/20 text-white"
-                      : "bg-accent text-white"
+                      : "bg-white text-accent-deep"
                   }`}
                 >
                   {datasets.length}
@@ -416,7 +418,7 @@ export default function App() {
           </div>
 
           {error && (
-            <div className="mt-2 rounded-xl border border-warn/30 bg-[#fff7ed] px-4 py-2.5 text-sm text-warn">
+            <div className="mt-2 rounded-[12px] border border-error/25 bg-[#fef2f2] px-4 py-2.5 text-sm text-error">
               {error}
               <button
                 type="button"
@@ -484,7 +486,7 @@ export default function App() {
           <button
             type="button"
             onClick={scrollToVisualization}
-            className="scroll-cue pointer-events-auto inline-flex items-center gap-2 rounded-full border border-champagne/40 bg-platinum/95 px-4 py-2.5 text-sm font-semibold text-ink shadow-lg backdrop-blur transition hover:border-accent hover:bg-accent hover:text-white"
+            className="scroll-cue pointer-events-auto inline-flex items-center gap-2 rounded-full border border-[#e9d5ff] bg-white px-4 py-2.5 text-sm font-semibold text-ai shadow-panel transition hover:border-ai hover:bg-ai-soft"
           >
             <span className="scroll-cue-arrow" aria-hidden>
               ↓
@@ -501,9 +503,11 @@ export default function App() {
         className="min-h-dvh px-3 py-4 md:px-5 md:py-6"
       >
         <div className="mx-auto flex h-[calc(100dvh-2rem)] max-w-[1500px] flex-col gap-3 md:h-[calc(100dvh-3rem)]">
-          <div className="panel flex shrink-0 items-center justify-between gap-3 rounded-2xl px-4 py-3 md:px-5">
+          <div className="panel flex shrink-0 items-center justify-between gap-3 rounded-[14px] px-4 py-3 md:px-5">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="brand-rail h-10 min-h-0" aria-hidden />
+              <span className="icon-bubble icon-bubble-mint" aria-hidden>
+                <ChartMiniIcon />
+              </span>
               <div className="min-w-0">
                 <h2 className="font-display text-xl font-bold text-ink md:text-2xl">
                   Visualization
@@ -518,7 +522,7 @@ export default function App() {
               onClick={() =>
                 window.scrollTo({ top: 0, behavior: "smooth" })
               }
-              className="shrink-0 rounded-full border border-line bg-platinum/95 px-3 py-2 text-xs font-semibold text-muted transition hover:border-champagne hover:bg-platinum-deep hover:text-ink"
+              className="btn-secondary shrink-0 rounded-full px-3 py-2 text-xs font-semibold"
             >
               ↑ Back to Results
             </button>
@@ -539,8 +543,35 @@ function createSessionId() {
   return `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function SparkIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 2.5 13.8 8.2 19.5 10 13.8 11.8 12 17.5 10.2 11.8 4.5 10 10.2 8.2 12 2.5Z"
+        fill="currentColor"
+      />
+      <path
+        d="M18.2 14.2 19 16.6 21.4 17.4 19 18.2 18.2 20.6 17.4 18.2 15 17.4 17.4 16.6 18.2 14.2Z"
+        fill="currentColor"
+        opacity="0.75"
+      />
+    </svg>
+  );
+}
+
+function ChartMiniIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M4 19V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M10 19V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M16 19v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M22 19H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function HamburgerIcon({ open, light = false }) {
-  const bar = light ? "bg-white" : "bg-accent";
+  const bar = light ? "bg-white" : "bg-accent-deep";
   return (
     <span className="relative block h-[14px] w-[18px]" aria-hidden>
       <span

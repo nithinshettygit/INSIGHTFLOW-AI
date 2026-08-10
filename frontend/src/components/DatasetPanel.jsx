@@ -10,10 +10,12 @@ export default function DatasetPanel({
   onClose,
 }) {
   return (
-    <aside className="panel flex h-full flex-col overflow-hidden rounded-2xl shadow-xl">
-      <div className="flex items-start justify-between gap-2 border-b border-line panel-header px-4 py-4 md:px-5">
+    <aside className="panel flex h-full flex-col overflow-hidden rounded-[12px] shadow-panel">
+      <div className="flex items-start justify-between gap-2 border-b border-line bg-white px-4 py-4 md:px-5">
         <div>
-          <h2 className="font-display text-lg font-bold tracking-tight text-ink">Datasets</h2>
+          <h2 className="font-display text-lg font-semibold tracking-tight text-ink">
+            Datasets
+          </h2>
           <p className="mt-1 text-sm text-muted">
             Upload CSV, Excel, or PDF. Profiling runs automatically.
           </p>
@@ -22,7 +24,7 @@ export default function DatasetPanel({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-line px-2.5 py-1 text-xs font-semibold text-muted transition hover:border-accent hover:text-ink"
+            className="btn-secondary rounded-lg px-2.5 py-1 text-xs font-semibold"
             aria-label="Close datasets panel"
           >
             Close
@@ -30,8 +32,8 @@ export default function DatasetPanel({
         )}
       </div>
 
-      <label className="mx-4 mt-4 block cursor-pointer rounded-xl border border-dashed border-line bg-soft/70 px-4 py-3 text-sm transition hover:border-accent hover:bg-soft md:mx-5">
-        <span className="font-semibold text-accent">
+      <label className="mx-4 mt-4 block cursor-pointer rounded-[12px] border border-dashed border-line bg-soft px-4 py-3 text-sm transition hover:border-accent hover:bg-accent-soft md:mx-5">
+        <span className="font-semibold text-accent-deep">
           {uploading ? "Uploading…" : "Choose file to upload"}
         </span>
         <input
@@ -58,10 +60,10 @@ export default function DatasetPanel({
               return (
                 <li key={item.dataset_id}>
                   <div
-                    className={`flex items-stretch gap-1 rounded-xl border transition ${
+                    className={`flex items-stretch gap-1 rounded-[12px] border transition ${
                       active
-                        ? "border-accent bg-accent/10"
-                        : "border-transparent bg-white/50 hover:border-line hover:bg-white/80"
+                        ? "border-accent bg-accent-soft"
+                        : "border-line bg-white hover:border-accent/40 hover:bg-soft"
                     }`}
                   >
                     <button
@@ -69,7 +71,7 @@ export default function DatasetPanel({
                       onClick={() => onSelect(item.dataset_id)}
                       className="min-w-0 flex-1 px-3 py-3 text-left"
                     >
-                      <div className="truncate text-sm font-semibold">
+                      <div className="truncate text-sm font-semibold text-ink">
                         {item.original_filename}
                       </div>
                       <div className="mt-1 text-xs text-muted">
@@ -92,7 +94,7 @@ export default function DatasetPanel({
                           event.stopPropagation();
                           onDelete(item);
                         }}
-                        className="m-1.5 shrink-0 self-center rounded-lg border border-transparent px-2.5 py-1.5 text-xs font-semibold text-[var(--warn)] transition hover:border-[var(--warn)]/40 hover:bg-[#fff7ed] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="m-1.5 shrink-0 self-center rounded-lg border border-transparent px-2.5 py-1.5 text-xs font-semibold text-error transition hover:border-error/30 hover:bg-[#fef2f2] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {deleting ? "…" : "Delete"}
                       </button>
@@ -106,9 +108,9 @@ export default function DatasetPanel({
       </div>
 
       {profile?.profile && (
-        <div className="shrink-0 border-t border-line px-5 py-4 text-xs text-muted">
+        <div className="shrink-0 border-t border-line bg-soft px-5 py-4 text-xs text-muted">
           <div className="font-semibold text-ink">Profile snapshot</div>
-          <div className="mt-2 space-y-1">
+          <div className="mt-2 grid grid-cols-2 gap-2">
             <div>Rows: {profile.profile.row_count ?? "—"}</div>
             <div>Columns: {profile.profile.column_count ?? "—"}</div>
             <div>Missing: {profile.profile.missing_values_total ?? "—"}</div>

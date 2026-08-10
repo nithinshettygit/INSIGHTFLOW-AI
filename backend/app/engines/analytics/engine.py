@@ -321,9 +321,8 @@ class AnalyticsEngine:
     ) -> list[SortSpec]:
         if not sorts:
             return []
-        lookup = {
-            normalize_column_name(str(c)): str(c) for c in result_frame.columns.tolist()
-        }
+        columns = [str(c) for c in result_frame.columns.tolist()]
+        lookup = {normalize_column_name(c): c for c in columns}
         resolved: list[SortSpec] = []
         for spec in sorts:
             key = normalize_column_name(spec.field)
@@ -331,9 +330,28 @@ class AnalyticsEngine:
             if match is None and spec.field in result_frame.columns:
                 match = spec.field
             if match is None:
+                # Map bare metric names onto aggregated result columns.
+                # Prefer max/min for extreme sorts, else sum/mean/count.
+                preferred = (
+                    ("min", "mean", "sum", "count", "median", "max")
+                    if spec.order == "asc"
+                    else ("max", "sum", "mean", "count", "median", "min")
+                )
+                for suffix in preferred:
+                    candidate = lookup.get(f"{key}_{suffix}")
+                    if candidate is not None:
+                        match = candidate
+                        break
+                if match is None:
+                    # Last resort: any column that starts with the metric name.
+                    for col_key, original in lookup.items():
+                        if col_key.startswith(f"{key}_"):
+                            match = original
+                            break
+            if match is None:
                 raise AnalyticsEngineError(
                     f"Sort field '{spec.field}' not in result columns: "
-                    f"{', '.join(map(str, result_frame.columns.tolist()))}"
+                    f"{', '.join(columns)}"
                 )
             resolved.append(SortSpec(field=match, order=spec.order))
         return resolved

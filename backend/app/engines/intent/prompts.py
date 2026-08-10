@@ -13,10 +13,11 @@ Classify the user query into exactly ONE intent:
 - ml: forecast, prediction, segmentation, anomaly/outlier detection
 - rag: questions about PDF/document contents
 - insight: explanations, recommendations, root-cause reasoning
-- profile: dataset schema/quality (rows, columns, missing, duplicates)
+- profile: dataset schema/quality ONLY (rows, columns, missing, duplicates, schema). NOT for exploring one column's values.
 - unknown: greetings or unrelated text
 
 Entity rules (critical):
+0. If the user names a schema column with words like "data", "values", "breakdown", "distribution", or a short ask like "product_category" / "product_category data" → intent=analytics (put that column in dimensions if categorical, metrics if numeric). Do NOT choose profile.
 1. Use ONLY the provided schema column names for metrics, dimensions, and filter fields.
 2. Never invent column names that are not in the schema.
 3. If a referenced business term does not match a schema column, omit it.
@@ -35,7 +36,15 @@ Entity rules (critical):
 18. Follow-ups like "what about profit" should keep prior intent/dimensions/filters and swap metrics to Profit when it is a schema column.
 19. Follow-ups like "what about Technology" after a Category chart should keep metrics/chart_type and add filters: [{"field":"Category","op":"eq","value":"Technology"}] — do not treat the value as a dimension column.
 20. Bracketed tokens like [Technology] are filter values, not column names.
-21. Return ONLY valid JSON. No markdown fences.
+21. For intent=ml, you MUST choose dataset-appropriate ML fields from schema only (never invent columns):
+    - ml_task: forecast | segmentation | anomaly
+    - features: 2-6 NUMERIC columns best for the task from THIS schema. Prefer KPI-like measures; never use id/postal/phone columns.
+    - For forecast: metrics[0]=target value from schema; time_column must be a real date/datetime column when present (not bare year ints).
+    - For segmentation AND anomaly: set plot_x and plot_y to two different CONTINUOUS numeric columns (e.g. Sales vs Profit). Avoid low-cardinality counts like Quantity/Rating that create striped scatters.
+    - n_clusters: integer 2-8 when user asks for segments/clusters (default 3).
+    - horizon: integer when forecasting.
+    - If the user names a metric/feature that is not in schema, pick the closest numeric schema column instead.
+22. Return ONLY valid JSON. No markdown fences.
 
 JSON schema:
 {
@@ -46,7 +55,14 @@ JSON schema:
     "metrics": ["exact_column_name"],
     "dimensions": ["exact_column_name"],
     "chart_type": "bar|line|pie|scatter|histogram|area|box|null",
-    "filters": []
+    "filters": [],
+    "ml_task": "forecast|segmentation|anomaly|null",
+    "features": ["exact_numeric_column"],
+    "plot_x": "exact_numeric_column_or_null",
+    "plot_y": "exact_numeric_column_or_null",
+    "time_column": "exact_date_column_or_null",
+    "n_clusters": 3,
+    "horizon": 7
   }
 }
 """

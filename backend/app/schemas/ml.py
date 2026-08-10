@@ -31,6 +31,14 @@ class MlRunRequest(BaseModel):
         default_factory=list,
         description="Feature columns for segmentation/anomaly. Auto-selected when empty.",
     )
+    plot_x: str | None = Field(
+        default=None,
+        description="Optional X axis for segmentation/anomaly scatter (dataset column).",
+    )
+    plot_y: str | None = Field(
+        default=None,
+        description="Optional Y axis for segmentation/anomaly scatter (dataset column).",
+    )
     horizon: int = Field(default=7, ge=1, le=365)
     n_clusters: int = Field(default=3, ge=2, le=20)
     contamination: float = Field(default=0.05, gt=0.0, lt=0.5)

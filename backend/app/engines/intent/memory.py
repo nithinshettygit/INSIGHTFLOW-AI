@@ -657,6 +657,140 @@ def _is_fresh_analysis_question(query: str, entities: dict[str, Any] | None) -> 
     )
 
 
+_EXPLICIT_PROFILE_RE = re.compile(
+    r"\b("
+    r"profile|schema|missing|duplicates?|nulls?|data\s+quality|column\s+types|"
+    r"how\s+many\s+rows|how\s+many\s+columns|data\s+profile|dataset\s+profile|"
+    r"summarize\s+the\s+dataset|summarise\s+the\s+dataset"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_COLUMN_EXPLORE_RE = re.compile(
+    r"\b("
+    r"data|values?|breakdown|distribution|categories|unique|show|list|"
+    r"counts?|summary|about|for|of"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def mentioned_schema_columns(
+    query: str,
+    columns: list[dict[str, Any]] | None,
+) -> list[str]:
+    """Return schema columns referenced in the query (longest names first)."""
+    lookup = _column_lookup(columns)
+    if not lookup or not (query or "").strip():
+        return []
+    norm_query = normalize_column_name(query)
+    scored: list[tuple[int, str]] = []
+    for key, original in lookup.items():
+        if not key:
+            continue
+        # Word-ish match on normalized forms: "product_category data".
+        if re.search(rf"(^|_)({re.escape(key)})(_|$)", f"_{norm_query}_"):
+            scored.append((len(key), original))
+            continue
+        # Soft match via match_column on whole query tokens.
+        matched = match_column(key.replace("_", " "), lookup)
+        if matched == original and key in norm_query:
+            scored.append((len(key), original))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    # Drop shorter names contained in a longer matched name.
+    chosen: list[str] = []
+    chosen_keys: list[str] = []
+    for _, name in scored:
+        key = normalize_column_name(name)
+        if any(key in other or other in key for other in chosen_keys if key != other):
+            # Prefer the longest already chosen; skip nested shorter hits.
+            if any(key in other for other in chosen_keys):
+                continue
+        chosen.append(name)
+        chosen_keys.append(key)
+    return chosen
+
+
+def rewrite_column_exploration(
+    *,
+    query: str,
+    intent: str,
+    target_engine: str,
+    confidence: float,
+    entities: dict[str, Any],
+    rationale: str | None,
+    provider: str,
+    columns: list[dict[str, Any]] | None,
+) -> dict[str, Any] | None:
+    """Map 'product_category data' → analytics breakdown, not full profile dump."""
+    text = (query or "").strip()
+    if not text or not columns:
+        return None
+    if looks_like_visualization(text) or looks_like_conversation_end(text):
+        return None
+    if _EXPLICIT_PROFILE_RE.search(text):
+        return None
+    # Keep strong non-profile engine asks.
+    if intent in {"ml", "rag", "insight", "visualization"} and confidence >= 0.7:
+        return None
+
+    mentioned = mentioned_schema_columns(text, columns)
+    if not mentioned:
+        return None
+
+    # Only rewrite soft/ambiguous asks (profile/unknown) or weak analytics
+    # that forgot to attach the column.
+    if intent not in {"profile", "unknown", "analytics"}:
+        return None
+    if intent == "analytics" and (entities.get("dimensions") or entities.get("metrics")):
+        return None
+    # Require an explore hint, or a short query that is mostly the column name.
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    short_column_ask = len(words) <= 4
+    if not short_column_ask and not _COLUMN_EXPLORE_RE.search(text):
+        return None
+
+    role_by_name = {
+        str(col.get("name")): str(col.get("role_hint") or "categorical")
+        for col in (columns or [])
+        if isinstance(col, dict) and col.get("name")
+    }
+    metrics: list[str] = []
+    dimensions: list[str] = []
+    for name in mentioned:
+        role = role_by_name.get(name, "categorical")
+        if is_measure_column(name, role):
+            if name not in metrics:
+                metrics.append(name)
+        else:
+            if name not in dimensions:
+                dimensions.append(name)
+
+    if not dimensions and not metrics:
+        return None
+    # Categorical "X data" → counts by X; numeric "sales data" → KPI metrics.
+    filled = dict(entities or {})
+    if dimensions:
+        filled["dimensions"] = dimensions
+    if metrics:
+        filled["metrics"] = metrics
+
+    return {
+        "intent": "analytics",
+        "target_engine": "analytics",
+        "confidence": max(float(confidence or 0.0), 0.82),
+        "entities": filled,
+        "rationale": (
+            f"{rationale or ''} | column exploration -> analytics "
+            f"({', '.join(dimensions + metrics)})"
+        ).strip(" |"),
+        "provider": f"{provider}+column_explore",
+        "memory_applied": True,
+        "reply": None,
+        "end_conversation": False,
+    }
+
+
 def apply_conversation_memory(
     *,
     query: str,
@@ -696,9 +830,31 @@ def apply_conversation_memory(
             "end_conversation": True,
         }
 
+    # Column asks like "product_category data" must not dump the full profile.
+    rewritten = rewrite_column_exploration(
+        query=query,
+        intent=intent,
+        target_engine=target_engine,
+        confidence=confidence,
+        entities=entities,
+        rationale=rationale,
+        provider=provider,
+        columns=columns,
+    )
+    if rewritten is not None:
+        # Continue with rewritten analytics so follow-ups can still enrich entities.
+        intent = rewritten["intent"]
+        target_engine = rewritten["target_engine"]
+        confidence = rewritten["confidence"]
+        entities = rewritten["entities"]
+        rationale = rewritten["rationale"]
+        provider = rewritten["provider"]
+        base = {**rewritten, "memory_applied": True}
+        if memory is None:
+            return base
+
     if memory is None:
         return base
-
     # Meta: answer from conversation turns, do not re-run last engine.
     if looks_like_history_question(query):
         return {

@@ -36,9 +36,26 @@ export function buildAnalyticsPayload(datasetId, intentResult, queryText) {
   const dimensions = entities.dimensions || [];
   const extreme = inferExtreme(query);
   const sortBy = [];
+  const aggregations = ["sum", "mean", "count"];
+
+  // Highest/lowest need min/max stats (global "maximum discount") and
+  // sortable agg column names (discount_max), not bare "discount".
+  if (extreme) {
+    if (extreme.order === "desc" && !aggregations.includes("max")) {
+      aggregations.push("max");
+    }
+    if (extreme.order === "asc" && !aggregations.includes("min")) {
+      aggregations.push("min");
+    }
+  }
 
   if (extreme && metrics.length) {
-    const field = dimensions.length ? `${metrics[0]}_sum` : metrics[0];
+    const metric = metrics[0];
+    const field = dimensions.length
+      ? `${metric}_sum`
+      : extreme.order === "asc"
+        ? `${metric}_min`
+        : `${metric}_max`;
     sortBy.push({
       field,
       order: extreme.order,
@@ -50,7 +67,7 @@ export function buildAnalyticsPayload(datasetId, intentResult, queryText) {
     metrics,
     dimensions,
     filters: normalizeFilters(entities.filters),
-    aggregations: ["sum", "mean", "count"],
+    aggregations,
     sort_by: sortBy,
     limit: extreme ? Math.max(extreme.limit, 1) : 50,
     include_kpis: true,
@@ -61,6 +78,9 @@ export function buildMlPayload(datasetId, intentResult, queryText) {
   const entities = intentResult.entities || {};
   const metrics = entities.metrics || [];
   const dimensions = entities.dimensions || [];
+  const features = Array.isArray(entities.features)
+    ? entities.features.filter(Boolean)
+    : [];
   const query = queryText || intentResult.query || "";
   const task =
     entities.ml_task ||
@@ -71,14 +91,29 @@ export function buildMlPayload(datasetId, intentResult, queryText) {
     dataset_id: datasetId,
     task,
     query,
-    target: metrics[0] || null,
-    time_column: dimensions[0] || entities.time_column || null,
-    features: metrics.length ? metrics : [],
+    target: metrics[0] || features[0] || null,
+    // Prefer real date fields; bare "year" ints must not become Unix timestamps.
+    time_column: pickTimeColumn(entities, dimensions),
+    // LLM-chosen features; backend auto-picks ranked numerics when empty.
+    features: features.length ? features : metrics,
+    plot_x: entities.plot_x || null,
+    plot_y: entities.plot_y || null,
     horizon: Number(entities.horizon) || 7,
     n_clusters: Number(entities.n_clusters) || 3,
     contamination: Number(entities.contamination) || 0.05,
     limit: 50,
   };
+}
+
+function pickTimeColumn(entities, dimensions) {
+  if (entities.time_column) return entities.time_column;
+  const dims = dimensions || [];
+  const preferred = dims.find((name) =>
+    /(order_date|ship_date|date|timestamp)/i.test(String(name)),
+  );
+  if (preferred) return preferred;
+  // Let the backend auto-detect (order_date over year) when no date dim is given.
+  return null;
 }
 
 export function buildInsightPayload(datasetId, intentResult, queryText) {
@@ -103,7 +138,8 @@ export function buildInsightPayload(datasetId, intentResult, queryText) {
 
 /**
  * Build a plain-language answer that names the extreme segment
- * (e.g. "Central has the lowest sales: 12,450").
+ * (e.g. "Central has the lowest sales: 12,450") or global max/min
+ * (e.g. "The highest discount is 0.45").
  */
 export function summarizeExtremeAnswer(queryText, intentResult, rows) {
   if (!Array.isArray(rows) || rows.length === 0) return null;
@@ -120,6 +156,31 @@ export function summarizeExtremeAnswer(queryText, intentResult, rows) {
     keys.map((key) => [String(key).toLowerCase(), key]),
   );
 
+  const preferredSuffixes =
+    extreme.order === "asc"
+      ? ["_min", "_mean", "_sum", "_count"]
+      : ["_max", "_sum", "_mean", "_count"];
+
+  const metricKey =
+    metrics
+      .flatMap((name) =>
+        preferredSuffixes.map(
+          (suffix) => keyLookup[`${String(name).toLowerCase()}${suffix}`],
+        ),
+      )
+      .find(Boolean) ||
+    metrics
+      .map((name) => keyLookup[String(name).toLowerCase()])
+      .find(Boolean) ||
+    keys.find((key) =>
+      preferredSuffixes.some((suffix) =>
+        String(key).toLowerCase().endsWith(suffix),
+      ),
+    ) ||
+    keys.find((key) => typeof row[key] === "number");
+
+  if (metricKey == null) return null;
+
   const dimensionKey =
     dimensions
       .map((name) => keyLookup[String(name).toLowerCase()])
@@ -133,29 +194,25 @@ export function summarizeExtremeAnswer(queryText, intentResult, rows) {
         ),
     );
 
-  const metricKey =
-    metrics
-      .map((name) => keyLookup[`${String(name).toLowerCase()}_sum`])
-      .find(Boolean) ||
-    metrics
-      .map((name) => keyLookup[String(name).toLowerCase()])
-      .find(Boolean) ||
-    keys.find((key) => /_sum$/i.test(key)) ||
-    keys.find((key) => typeof row[key] === "number" && key !== dimensionKey);
-
-  if (dimensionKey == null || metricKey == null) return null;
-  if (String(dimensionKey).toLowerCase() === String(metricKey).toLowerCase()) {
-    return null;
-  }
-
-  const label = formatValue(row[dimensionKey]);
   const value = formatValue(row[metricKey]);
-  if (label === "—" || label === "") return null;
-
-  const metricLabel = String(metricKey).replace(/_sum$/i, "");
+  const metricLabel = String(metricKey).replace(
+    /_(sum|mean|count|min|max|median)$/i,
+    "",
+  );
   const adjective = extreme.order === "asc" ? "lowest" : "highest";
 
-  return `${label} has the ${adjective} ${metricLabel}: ${value}.`;
+  if (
+    dimensionKey != null &&
+    String(dimensionKey).toLowerCase() !== String(metricKey).toLowerCase()
+  ) {
+    const label = formatValue(row[dimensionKey]);
+    if (label !== "—" && label !== "") {
+      return `${label} has the ${adjective} ${metricLabel}: ${value}.`;
+    }
+  }
+
+  // Global extreme with no segment dimension.
+  return `The ${adjective} ${metricLabel} is ${value}.`;
 }
 
 function inferExtreme(query) {
@@ -171,7 +228,7 @@ function inferExtreme(query) {
       ? Number(text.match(/\btop\s+(\d+)\b/)[1])
       : segmentPattern.test(text)
         ? 1
-        : 5;
+        : 1;
     return { order: "asc", limit };
   }
   if (/(highest|largest|maximum|max\b|most|top\b|best)/.test(text)) {
@@ -180,7 +237,7 @@ function inferExtreme(query) {
       ? Number(topMatch[1])
       : segmentPattern.test(text)
         ? 1
-        : 5;
+        : 1;
     return { order: "desc", limit };
   }
   return null;

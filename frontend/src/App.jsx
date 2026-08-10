@@ -254,9 +254,16 @@ export default function App() {
           intent,
           analyticsResult.results || [],
         );
+        const dims = intent.entities?.dimensions || [];
+        const mets = intent.entities?.metrics || [];
+        const focusLabel = dims.length
+          ? `Breakdown of ${dims.join(", ")}`
+          : mets.length
+            ? `Metrics: ${mets.join(", ")}`
+            : "Analytics complete";
         assistantContent =
           extremeAnswer ||
-          `Analytics complete — ${analyticsResult.result_count} result rows.`;
+          `${focusLabel} — ${analyticsResult.result_count} result rows.`;
         meta = `filtered ${analyticsResult.row_count_after_filter}/${analyticsResult.row_count_before} rows`;
         if (intent.memory_applied) {
           meta = `${meta} · memory`;

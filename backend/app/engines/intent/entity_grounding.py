@@ -112,6 +112,12 @@ def ground_entities(
             resolved,
             dropped,
         ),
+        "features": _ground_name_list(
+            entities.get("features") or entities.get("metrics"),
+            lookup,
+            resolved,
+            dropped,
+        ),
         "chart_type": _ground_chart_type(entities.get("chart_type")),
         "filters": _ground_filters(
             entities.get("filters"),
@@ -119,12 +125,30 @@ def ground_entities(
             resolved,
             dropped,
         ),
+        "ml_task": _ground_ml_task(entities.get("ml_task") or entities.get("task")),
+        "plot_x": _match_column(str(entities["plot_x"]), lookup)
+        if entities.get("plot_x") not in (None, "")
+        else None,
+        "plot_y": _match_column(str(entities["plot_y"]), lookup)
+        if entities.get("plot_y") not in (None, "")
+        else None,
+        "time_column": _match_column(str(entities["time_column"]), lookup)
+        if entities.get("time_column") not in (None, "")
+        else None,
+        "n_clusters": _ground_int(entities.get("n_clusters"), default=None, min_value=2, max_value=20),
+        "horizon": _ground_int(entities.get("horizon"), default=None, min_value=1, max_value=365),
         "grounding": {
             "available_columns": columns,
             "resolved": resolved,
             "dropped": dropped,
         },
     }
+    if grounded["plot_x"]:
+        resolved[str(entities.get("plot_x"))] = grounded["plot_x"]
+    if grounded["plot_y"]:
+        resolved[str(entities.get("plot_y"))] = grounded["plot_y"]
+    if grounded["time_column"]:
+        resolved[str(entities.get("time_column"))] = grounded["time_column"]
 
     # Never group by a KPI/measure column (sales stored as object still counts).
     measure_dims = [
@@ -225,6 +249,39 @@ def _ground_chart_type(value: Any) -> str | None:
     if text in ALLOWED_CHART_TYPES:
         return text
     return None
+
+
+def _ground_ml_task(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip().lower()
+    if text in {"forecast", "segmentation", "anomaly"}:
+        return text
+    if "segment" in text or "cluster" in text:
+        return "segmentation"
+    if "anomal" in text or "outlier" in text:
+        return "anomaly"
+    if "forecast" in text or "predict" in text:
+        return "forecast"
+    return None
+
+
+def _ground_int(
+    value: Any,
+    *,
+    default: int | None,
+    min_value: int,
+    max_value: int,
+) -> int | None:
+    if value is None or value == "":
+        return default
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return default
+    if number < min_value or number > max_value:
+        return default
+    return number
 
 
 def match_column(value: str, lookup: dict[str, str]) -> str | None:

@@ -92,6 +92,8 @@ class MlEngine:
                 n_clusters=n_clusters,
                 limit=request.limit,
                 random_state=random_state,
+                plot_x=request.plot_x,
+                plot_y=request.plot_y,
             )
         elif task == "anomaly":
             payload = run_anomaly(
@@ -102,6 +104,8 @@ class MlEngine:
                 contamination=contamination,
                 limit=request.limit,
                 random_state=random_state,
+                plot_x=request.plot_x,
+                plot_y=request.plot_y,
             )
         else:
             raise MlEngineError(f"Unsupported ML task '{task}'")

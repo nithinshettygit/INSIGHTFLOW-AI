@@ -15,6 +15,8 @@ from app.engines.ml.helpers import (
     MlEngineError,
     coerce_numeric,
     detect_time_column,
+    infer_target_column,
+    parse_time_series,
     records_from_frame,
     resolve_column,
     to_jsonable,
@@ -34,58 +36,63 @@ def run_forecast(
     if frame.empty:
         raise MlEngineError("Dataset is empty")
 
-    target_col = resolve_column(target, lookup, label="target") if target else None
-    if target_col is None:
-        # Prefer common business metrics, else first coercible numeric column.
-        for candidate in ("sales", "revenue", "profit", "quantity", "amount"):
-            resolved = resolve_column(candidate, lookup, label="target", required=False)
-            if resolved is not None:
-                try:
-                    coerce_numeric(frame, resolved)
-                    target_col = resolved
-                    break
-                except MlEngineError:
-                    continue
-        if target_col is None:
-            for column in frame.columns:
-                try:
-                    coerce_numeric(frame, str(column))
-                    target_col = str(column)
-                    break
-                except MlEngineError:
-                    continue
-    if target_col is None:
-        raise MlEngineError("Could not find a numeric target column for forecasting")
+    target_col = infer_target_column(frame, lookup, preferred=target)
 
     time_col = (
         resolve_column(time_column, lookup, label="time_column", required=False)
         if time_column
         else detect_time_column(frame)
     )
+    # If an explicit time column fails parsing, fall back to auto-detect.
+    candidate_times = [time_col] if time_col else []
+    auto_time = detect_time_column(frame)
+    if auto_time and auto_time not in candidate_times:
+        candidate_times.append(auto_time)
 
-    working = frame[[c for c in [time_col, target_col] if c]].copy()
-    working[target_col] = coerce_numeric(working, target_col)
-    working = working.dropna(subset=[target_col])
-
-    if time_col:
-        working[time_col] = pd.to_datetime(working[time_col], errors="coerce")
-        working = working.dropna(subset=[time_col])
-        working = (
-            working.groupby(time_col, as_index=False)[target_col]
+    working = None
+    freq = None
+    used_time = None
+    for candidate in candidate_times:
+        trial = frame[[candidate, target_col]].copy()
+        trial[target_col] = coerce_numeric(trial, target_col)
+        trial = trial.dropna(subset=[target_col])
+        trial[candidate] = parse_time_series(trial[candidate], candidate)
+        trial = trial.dropna(subset=[candidate])
+        if trial.empty:
+            continue
+        trial = (
+            trial.groupby(candidate, as_index=False)[target_col]
             .sum()
-            .sort_values(time_col)
+            .sort_values(candidate)
         )
-        time_values = working[time_col]
-        freq = pd.infer_freq(time_values) or _guess_freq(time_values)
-    else:
-        working = working.reset_index(drop=True)
+        values = trial[candidate]
+        if len(values) and (values.max() - values.min()) <= pd.Timedelta(days=2):
+            if pd.Timestamp(values.min()).year <= 1971:
+                continue
+        if len(trial) < 3:
+            continue
+        working = trial
+        used_time = candidate
+        freq = pd.infer_freq(values) or _guess_freq(values)
+        break
+
+    if working is None:
+        # Last resort: ordered row index (still dataset-driven target).
+        working = frame[[target_col]].copy()
+        working[target_col] = coerce_numeric(working, target_col)
+        working = working.dropna(subset=[target_col]).reset_index(drop=True)
         working.insert(0, "period", np.arange(1, len(working) + 1))
-        time_col = "period"
-        time_values = working[time_col]
+        used_time = "period"
         freq = None
+
+    time_col = used_time or "period"
+    time_values = working[time_col]
 
     if len(working) < 3:
         raise MlEngineError("Forecast needs at least 3 aggregated time points")
+
+    # Adapt horizon to series length (short yearly series ⇒ shorter horizon).
+    horizon = int(max(1, min(horizon, max(1, len(working) // 2), 90)))
 
     y = working[target_col].astype(float).to_numpy()
     x = np.arange(len(y), dtype=float).reshape(-1, 1)
@@ -97,12 +104,16 @@ def run_forecast(
     future_x = np.arange(len(y), len(y) + horizon, dtype=float).reshape(-1, 1)
     trend_forecast = model.predict(future_x)
 
-    # Seasonal-naive blend when enough history exists (weekly-ish period of 7).
-    season = 7 if len(y) >= 14 else max(1, min(4, len(y) // 2))
+    # Seasonal period adapts to inferred frequency / history length.
+    if freq in {"MS", "M", "ME"}:
+        season = 12 if len(y) >= 24 else max(1, min(4, len(y) // 2))
+    elif freq in {"W", "W-SUN", "W-MON"}:
+        season = 52 if len(y) >= 104 else 7 if len(y) >= 14 else max(1, min(4, len(y) // 2))
+    else:
+        season = 7 if len(y) >= 14 else max(1, min(4, len(y) // 2))
     seasonal = np.array([y[-season + (i % season)] for i in range(horizon)], dtype=float)
     alpha = 0.65
     forecast_values = alpha * trend_forecast + (1.0 - alpha) * seasonal
-    # Keep non-negative for typical business metrics.
     if float(np.nanmin(y)) >= 0:
         forecast_values = np.maximum(forecast_values, 0.0)
 
@@ -148,7 +159,7 @@ def run_forecast(
         )
     )
     figure.update_layout(
-        title=f"Forecast: {target_col}",
+        title=f"Forecast: {target_col} over {time_col}",
         xaxis_title=time_col,
         yaxis_title=target_col,
         template="plotly_white",
@@ -164,6 +175,7 @@ def run_forecast(
             "time_column": time_col,
             "history_points": len(y),
             "horizon": horizon,
+            "season_period": season,
             "train_mae": round(mae, 4),
             "forecast_mean": round(float(np.mean(forecast_values)), 4),
             "forecast_total": round(float(np.sum(forecast_values)), 4),
@@ -176,6 +188,7 @@ def run_forecast(
             "time_column": time_col,
             "horizon": horizon,
             "freq": freq,
+            "selection": "dataset_adaptive",
         },
         "plotly_figure": _figure_dict(figure),
     }

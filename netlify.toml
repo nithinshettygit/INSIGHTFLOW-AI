@@ -1,8 +1,7 @@
-# Build the Vite app from /frontend (repo root config for Netlify)
+# Build from repo root without relying on Netlify "base directory"
 [build]
-  base = "frontend"
-  command = "npm run build"
-  publish = "dist"
+  command = "npm --prefix frontend install && npm --prefix frontend run build"
+  publish = "frontend/dist"
 
 [build.environment]
   NODE_VERSION = "20"

@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from app.core.config import Settings, get_settings
 from app.core.logging import get_logger
-from app.engines.intent import IntentDetector, RuleBasedIntentDetector
+from app.engines.intent import IntentDetector
 from app.engines.intent.graph import build_intent_graph
 from app.engines.intent.llm_based import LLMIntentDetector
-from app.engines.intent.rules import INTENT_CATALOG
 from app.schemas.intent import (
     EnginePass,
     IntentCatalogItem,
@@ -30,12 +29,9 @@ class IntentServiceError(Exception):
 
 
 def build_intent_detector(settings: Settings | None = None) -> IntentDetector:
-    """Create the configured intent detector."""
+    """Create the project's single LLM intent detector."""
     settings = settings or get_settings()
-    provider = settings.intent_provider.strip().lower()
-    if provider in {"llm", "groq", "langgraph"}:
-        return LLMIntentDetector(settings=settings)
-    return RuleBasedIntentDetector()
+    return LLMIntentDetector(settings=settings)
 
 
 class IntentService:
@@ -60,15 +56,18 @@ class IntentService:
         session_id = (request.session_id or "").strip() or None
         thread_id = session_id or "anonymous"
 
-        result = self.graph.invoke(
-            {
-                "query": query,
-                "dataset_id": request.dataset_id,
-                "session_id": session_id,
-                "nodes_executed": [],
-            },
-            config={"configurable": {"thread_id": thread_id}},
-        )
+        try:
+            result = self.graph.invoke(
+                {
+                    "query": query,
+                    "dataset_id": request.dataset_id,
+                    "session_id": session_id,
+                    "nodes_executed": [],
+                },
+                config={"configurable": {"thread_id": thread_id}},
+            )
+        except RuntimeError as exc:
+            raise IntentServiceError(str(exc), status_code=503) from exc
 
         if result.get("error"):
             message = str(result["error"])
@@ -122,7 +121,21 @@ class IntentService:
         )
 
     def catalog(self) -> IntentCatalogResponse:
-        items = [IntentCatalogItem(**item) for item in INTENT_CATALOG]
+        items = [
+            IntentCatalogItem(
+                intent=intent,
+                target_engine=engine,
+                description=f"Routes requests to the {engine} engine.",
+            )
+            for intent, engine in (
+                ("analytics", "analytics"),
+                ("visualization", "visualization"),
+                ("ml", "ml"),
+                ("rag", "rag"),
+                ("insight", "insight"),
+                ("profile", "profiling"),
+            )
+        ]
         return IntentCatalogResponse(count=len(items), intents=items)
 
 

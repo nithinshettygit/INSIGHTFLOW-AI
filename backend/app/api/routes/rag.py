@@ -46,7 +46,7 @@ def rag_query(
     request: RagQueryRequest,
     service: RagService = Depends(get_rag_service),
 ) -> RagQueryResponse:
-    """Retrieve PDF passages and answer a document question."""
+    """Retrieve PDF passages and generate an LLM document answer."""
     try:
         return service.query(request)
     except RagServiceError as exc:

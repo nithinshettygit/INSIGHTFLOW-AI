@@ -68,7 +68,6 @@ class InsightService:
                 focus_metrics=request.focus_metrics,
                 focus_dimensions=request.focus_dimensions,
                 include_ml_context=request.include_ml_context,
-                synthesize=request.synthesize,
             )
         except InsightEngineError as exc:
             raise InsightServiceError(exc.message, status_code=exc.status_code) from exc

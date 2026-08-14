@@ -19,7 +19,7 @@ def analyze_insight(
     request: InsightAnalyzeRequest,
     service: InsightService = Depends(get_insight_service),
 ) -> InsightAnalyzeResponse:
-    """Explain, recommend, or root-cause using processed evidence (LLM optional)."""
+    """Explain, recommend, or root-cause using LLM reasoning over processed evidence."""
     try:
         return service.analyze(request)
     except InsightServiceError as exc:

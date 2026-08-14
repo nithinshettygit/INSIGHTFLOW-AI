@@ -40,12 +40,6 @@ class RagQueryRequest(BaseModel):
     dataset_id: str
     question: str = Field(min_length=1, max_length=4000)
     top_k: int | None = Field(default=None, ge=1, le=20)
-    synthesize: bool | None = Field(
-        default=None,
-        description="If true, use Groq to synthesize an answer from retrieved passages.",
-    )
-
-
 class RagQueryResponse(BaseModel):
     dataset_id: str
     question: str

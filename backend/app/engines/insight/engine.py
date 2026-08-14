@@ -11,7 +11,6 @@ from langchain_groq import ChatGroq
 
 from app.core.config import Settings, get_settings
 from app.core.logging import get_logger
-from app.engines.insight.deterministic import build_deterministic_insight
 from app.engines.insight.evidence import build_evidence_pack, infer_insight_mode
 from app.engines.insight.prompts import INSIGHT_SYSTEM_PROMPT, build_insight_user_prompt
 from app.schemas.insight import InsightMode
@@ -45,7 +44,6 @@ class InsightEngine:
         focus_metrics: list[str],
         focus_dimensions: list[str],
         include_ml_context: bool,
-        synthesize: bool | None,
     ) -> dict[str, Any]:
         cleaned = question.strip()
         if not cleaned:
@@ -65,35 +63,24 @@ class InsightEngine:
             settings=self.settings,
         )
 
-        use_llm = (
-            self.settings.insight_use_llm if synthesize is None else bool(synthesize)
-        )
-        if use_llm and self.settings.groq_api_key.strip():
-            try:
-                payload = self._synthesize_with_llm(
-                    question=cleaned,
-                    mode=resolved_mode,
-                    evidence=evidence,
-                )
-                provider = "groq"
-            except Exception as exc:
-                logger.warning(
-                    "Insight LLM synthesis failed, using deterministic fallback: %s",
-                    exc,
-                )
-                payload = build_deterministic_insight(
-                    question=cleaned,
-                    mode=resolved_mode,
-                    evidence=evidence,
-                )
-                provider = "deterministic_fallback"
-        else:
-            payload = build_deterministic_insight(
+        if not self.settings.groq_api_key.strip():
+            raise InsightEngineError(
+                "GROQ_API_KEY is required for LLM insight analysis",
+                status_code=503,
+            )
+        try:
+            payload = self._synthesize_with_llm(
                 question=cleaned,
                 mode=resolved_mode,
                 evidence=evidence,
             )
-            provider = payload.get("provider") or "deterministic"
+        except Exception as exc:
+            logger.exception("Insight LLM synthesis failed: %s", exc)
+            raise InsightEngineError(
+                "LLM insight analysis failed. Please try again.",
+                status_code=503,
+            ) from exc
+        provider = "groq"
 
         logger.info(
             "Insight complete dataset_id=%s mode=%s provider=%s",
@@ -118,7 +105,7 @@ class InsightEngine:
                 "focus_dimensions": (evidence.get("focus") or {}).get("dimensions")
                 or [],
                 "include_ml_context": include_ml_context,
-                "synthesize": provider.startswith("groq"),
+                "synthesize": True,
                 "evidence_keys": sorted(evidence.keys()),
             },
         }

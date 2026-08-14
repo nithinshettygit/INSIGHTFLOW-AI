@@ -18,13 +18,22 @@ from app.engines.intent.memory import (
     apply_conversation_memory,
     get_session_memory_store,
 )
-from app.engines.intent.rules import ENGINE_ROUTING
 from app.services.dataset_service import DatasetService, DatasetServiceError
 
 logger = get_logger(__name__)
 
 # Process-wide checkpointer so session threads survive across requests.
 _CHECKPOINTER = MemorySaver()
+
+ENGINE_ROUTING = {
+    "analytics": {"status": "ready", "phase": "Phase 5", "message": "Routed to Analytics Engine."},
+    "visualization": {"status": "ready", "phase": "Phase 6", "message": "Routed to Visualization Engine."},
+    "ml": {"status": "ready", "phase": "Phase 9", "message": "Routed to ML Engine."},
+    "rag": {"status": "ready", "phase": "Phase 8", "message": "Routed to RAG Engine."},
+    "insight": {"status": "ready", "phase": "Phase 10", "message": "Routed to Insight Engine."},
+    "profiling": {"status": "ready", "phase": "Phase 3", "message": "Routed to profiling service."},
+    "none": {"status": "planned", "phase": None, "message": "No engine matched."},
+}
 
 
 class IntentGraphState(TypedDict, total=False):

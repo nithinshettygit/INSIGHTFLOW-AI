@@ -1,6 +1,6 @@
 """Extensible intent detector contract.
 
-Phase 4 supports rule-based and Groq LLM detectors behind one interface.
+Phase 4 uses a Groq LLM detector behind one interface.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ class IntentMatch:
     confidence: float
     matched_keywords: list[str] = field(default_factory=list)
     rationale: str | None = None
-    provider: str = "rules"
+    provider: str = "groq"
     entities: dict[str, Any] = field(default_factory=dict)
 
 

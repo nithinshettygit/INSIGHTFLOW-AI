@@ -117,7 +117,6 @@ class RagService:
                 dataset_id=request.dataset_id,
                 question=request.question,
                 top_k=request.top_k,
-                synthesize=request.synthesize,
             )
         except RagEngineError as exc:
             raise RagServiceError(exc.message, status_code=exc.status_code) from exc

@@ -19,7 +19,7 @@ def detect_intent(
     request: IntentDetectRequest,
     service: IntentService = Depends(get_intent_service),
 ) -> IntentDetectResponse:
-    """Classify a user query via LangGraph + Groq (rules fallback)."""
+    """Classify a user query via LangGraph + Groq."""
     try:
         return service.detect(request)
     except IntentServiceError as exc:

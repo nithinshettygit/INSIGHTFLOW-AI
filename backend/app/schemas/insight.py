@@ -23,12 +23,6 @@ class InsightAnalyzeRequest(BaseModel):
     focus_metrics: list[str] = Field(default_factory=list)
     focus_dimensions: list[str] = Field(default_factory=list)
     include_ml_context: bool = True
-    synthesize: bool | None = Field(
-        default=None,
-        description="If true, use Groq for reasoning. Defaults to INSIGHT_USE_LLM.",
-    )
-
-
 class InsightFinding(BaseModel):
     title: str
     detail: str

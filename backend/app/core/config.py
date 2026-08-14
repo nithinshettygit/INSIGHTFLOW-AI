@@ -41,7 +41,6 @@ class Settings(BaseSettings):
         default="llama-3.3-70b-versatile",
         alias="GROQ_MODEL",
     )
-    intent_provider: str = Field(default="llm", alias="INTENT_PROVIDER")
     intent_temperature: float = Field(default=0.0, alias="INTENT_TEMPERATURE")
 
     upload_dir: str = Field(default="backend/data/uploads", alias="UPLOAD_DIR")
@@ -73,7 +72,6 @@ class Settings(BaseSettings):
     rag_chunk_overlap: int = Field(default=120, alias="RAG_CHUNK_OVERLAP")
     rag_top_k: int = Field(default=4, alias="RAG_TOP_K")
     rag_embedding_dim: int = Field(default=384, alias="RAG_EMBEDDING_DIM")
-    rag_use_llm: bool = Field(default=True, alias="RAG_USE_LLM")
     rag_temperature: float = Field(default=0.0, alias="RAG_TEMPERATURE")
 
     # ML (Phase 9)
@@ -86,7 +84,6 @@ class Settings(BaseSettings):
     ml_random_state: int = Field(default=42, alias="ML_RANDOM_STATE")
 
     # Insight (Phase 10)
-    insight_use_llm: bool = Field(default=True, alias="INSIGHT_USE_LLM")
     insight_temperature: float = Field(default=0.1, alias="INSIGHT_TEMPERATURE")
 
     @property

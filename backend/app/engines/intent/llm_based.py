@@ -36,7 +36,7 @@ class LLMIntentDetector(IntentDetector):
             return self._detect_with_groq(query, context)
         except Exception as exc:
             logger.exception("Groq intent classification failed: %s", exc)
-            raise RuntimeError("LLM intent detection failed. Please try again.") from exc
+            raise RuntimeError(f"LLM intent detection failed: {exc}") from exc
 
     def _detect_with_groq(
         self,

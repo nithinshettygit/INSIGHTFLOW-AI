@@ -44,10 +44,6 @@ class Settings(BaseSettings):
     intent_temperature: float = Field(default=0.0, alias="INTENT_TEMPERATURE")
 
     upload_dir: str = Field(default="backend/data/uploads", alias="UPLOAD_DIR")
-    processed_dir: str = Field(
-        default="backend/data/processed",
-        alias="PROCESSED_DIR",
-    )
     model_dir: str = Field(default="backend/models", alias="MODEL_DIR")
     rag_dir: str = Field(default="backend/data/rag", alias="RAG_DIR")
 
@@ -100,10 +96,6 @@ class Settings(BaseSettings):
     @property
     def upload_path(self) -> Path:
         return self.resolve_path(self.upload_dir)
-
-    @property
-    def processed_path(self) -> Path:
-        return self.resolve_path(self.processed_dir)
 
     @property
     def model_path(self) -> Path:

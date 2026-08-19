@@ -24,7 +24,6 @@ async def lifespan(app: FastAPI):
     # Ensure data directories exist early so later phases can write safely.
     for path in (
         settings.upload_path,
-        settings.processed_path,
         settings.model_path,
         settings.rag_path,
     ):

@@ -163,7 +163,6 @@ class DatasetService:
             raise DatasetServiceError(exc.message, status_code=exc.status_code) from exc
 
         self._write_meta(dataset_dir / META_FILENAME, meta)
-        self._persist_processed_summary(meta, profile)
 
         if dataset_type == "pdf":
             self._auto_index_pdf(meta)
@@ -208,7 +207,6 @@ class DatasetService:
             "missing_values_total": profile.missing_values_total,
         }
         self._write_meta(dataset_dir / META_FILENAME, meta)
-        self._persist_processed_summary(meta, profile)
         return profile
 
     def delete_dataset(self, dataset_id: str) -> None:
@@ -216,9 +214,6 @@ class DatasetService:
         if not dataset_dir.exists():
             raise DatasetServiceError("Dataset not found", status_code=404)
         self._cleanup_dir(dataset_dir)
-        processed = self.settings.processed_path / f"{dataset_id}.profile.json"
-        if processed.exists():
-            processed.unlink(missing_ok=True)
         try:
             from app.services.rag_service import get_rag_service
 
@@ -345,27 +340,6 @@ class DatasetService:
 
     def _read_profile(self, path: Path) -> DatasetProfile:
         return DatasetProfile.model_validate_json(path.read_text(encoding="utf-8"))
-
-    def _persist_processed_summary(
-        self,
-        meta: DatasetMeta,
-        profile: DatasetProfile,
-    ) -> None:
-        """Store a compact profile summary under processed/ for later engines."""
-        processed_root = ensure_directory(self.settings.processed_path)
-        target = processed_root / f"{meta.dataset_id}.profile.json"
-        summary = {
-            "dataset_id": meta.dataset_id,
-            "dataset_type": meta.dataset_type,
-            "original_filename": meta.original_filename,
-            "row_count": profile.row_count,
-            "column_count": profile.column_count,
-            "duplicate_rows": profile.duplicate_rows,
-            "missing_values_total": profile.missing_values_total,
-            "profiled_at": profile.profiled_at.isoformat(),
-            "column_names": profile.metadata.get("column_names", []),
-        }
-        target.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     def _cleanup_dir(self, path: Path) -> None:
         if path.exists():

@@ -275,7 +275,7 @@ export default function ResultsPanel({
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.slice(-25).map((row, index) => (
+                  {(mlResult ? rows : rows.slice(-25)).map((row, index) => (
                     <tr key={index} className="border-t border-line bg-white">
                       {columns.map((column) => (
                         <td

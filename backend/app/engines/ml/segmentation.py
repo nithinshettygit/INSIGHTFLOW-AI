@@ -153,13 +153,15 @@ def _build_cluster_figure(
         resolve_column(plot_y, lookup, label="plot_y", required=False) if plot_y else None
     )
 
-    # 1) Continuous feature axes (reject discrete Quantity-style stripes).
-    axes = pick_scatter_axes(
-        plot_frame,
-        feature_cols,
-        preferred_x=resolved_x,
-        preferred_y=resolved_y,
-    )
+    # Use requested raw axes when supplied; otherwise PCA keeps 3+ features visible.
+    axes = None
+    if len(feature_cols) < 3 and (resolved_x or resolved_y):
+        axes = pick_scatter_axes(
+            plot_frame,
+            feature_cols,
+            preferred_x=resolved_x,
+            preferred_y=resolved_y,
+        )
     if axes is not None:
         axis_x, axis_y = axes
         try:

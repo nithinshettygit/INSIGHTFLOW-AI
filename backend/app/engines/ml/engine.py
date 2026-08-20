@@ -89,7 +89,7 @@ class MlEngine:
             payload = run_segmentation(
                 frame,
                 lookup,
-                features=request.features,
+                features=augment_query_features(frame, lookup, request.features, request.query),
                 n_clusters=n_clusters,
                 limit=request.limit,
                 random_state=random_state,
@@ -167,3 +167,20 @@ def infer_forecast_granularity(query: str | None) -> str | None:
     if re.search(r"\b(day|daily|days)\b", text):
         return "D"
     return None
+
+
+def augment_query_features(
+    frame: pd.DataFrame,
+    lookup: dict[str, str],
+    features: list[str],
+    query: str | None,
+) -> list[str]:
+    """Keep explicitly named numeric columns from being lost by intent extraction."""
+    requested = list(features or [])
+    text = (query or "").lower()
+    for column in frame.columns:
+        name = str(column)
+        pattern = rf"(?<![a-z0-9_]){re.escape(name.lower())}(?![a-z0-9_])"
+        if re.search(pattern, text, flags=re.IGNORECASE) and name not in requested:
+            requested.append(name)
+    return requested

@@ -47,10 +47,6 @@ class Settings(BaseSettings):
     model_dir: str = Field(default="backend/models", alias="MODEL_DIR")
     rag_dir: str = Field(default="backend/data/rag", alias="RAG_DIR")
 
-    database_url: str = Field(
-        default="sqlite:///./backend/data/insightflow.db",
-        alias="DATABASE_URL",
-    )
 
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     max_upload_size_mb: int = Field(default=25, alias="MAX_UPLOAD_SIZE_MB")

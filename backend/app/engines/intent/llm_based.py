@@ -91,14 +91,14 @@ def _parse_json_content(content: str) -> dict[str, Any]:
     fence = re.search(r"```(?:json)?\s*(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
     if fence:
         text = fence.group(1).strip()
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError:
-        start = text.find("{")
-        end = text.rfind("}")
-        if start == -1 or end == -1 or end <= start:
-            raise
-        data = json.loads(text[start : end + 1])
+
+    start = text.find("{")
+    if start == -1:
+        raise json.JSONDecodeError("No JSON object found", text, 0)
+
+    # Decode one complete object so trailing explanations or duplicate model
+    # responses do not make the valid first object fail with "Extra data".
+    data, _ = json.JSONDecoder().raw_decode(text[start:])
     if not isinstance(data, dict):
         raise ValueError("LLM response JSON must be an object")
     return data

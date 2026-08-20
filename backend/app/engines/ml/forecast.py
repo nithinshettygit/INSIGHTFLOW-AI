@@ -31,6 +31,7 @@ def run_forecast(
     time_column: str | None,
     horizon: int,
     limit: int,
+    granularity: str | None = None,
     random_state: int = 42,
 ) -> dict[str, Any]:
     if frame.empty:
@@ -60,6 +61,10 @@ def run_forecast(
         trial = trial.dropna(subset=[candidate])
         if trial.empty:
             continue
+        if granularity:
+            trial[candidate] = trial[candidate].dt.to_period(
+                {"D": "D", "W": "W", "MS": "M"}[granularity]
+            ).dt.start_time
         trial = (
             trial.groupby(candidate, as_index=False)[target_col]
             .sum()
@@ -175,6 +180,7 @@ def run_forecast(
             "time_column": time_col,
             "history_points": len(y),
             "horizon": horizon,
+            "granularity": granularity or freq,
             "season_period": season,
             "train_mae": round(mae, 4),
             "forecast_mean": round(float(np.mean(forecast_values)), 4),
@@ -187,6 +193,7 @@ def run_forecast(
             "target": target_col,
             "time_column": time_col,
             "horizon": horizon,
+            "granularity": granularity or freq,
             "freq": freq,
             "selection": "dataset_adaptive",
         },

@@ -82,6 +82,7 @@ class MlEngine:
                 time_column=request.time_column,
                 horizon=horizon,
                 limit=request.limit,
+                granularity=infer_forecast_granularity(request.query),
                 random_state=random_state,
             )
         elif task == "segmentation":
@@ -155,3 +156,14 @@ def infer_ml_task(query: str | None) -> MlTask:
         if any(keyword in text for keyword in keywords):
             return task
     return "forecast"
+
+
+def infer_forecast_granularity(query: str | None) -> str | None:
+    text = (query or "").lower()
+    if re.search(r"\b(month|monthly|months)\b", text):
+        return "MS"
+    if re.search(r"\b(week|weekly|weeks)\b", text):
+        return "W"
+    if re.search(r"\b(day|daily|days)\b", text):
+        return "D"
+    return None

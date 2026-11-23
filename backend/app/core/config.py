@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 # repository root (parent of backend/)
 PROJECT_ROOT = BACKEND_ROOT.parent
-CONFIG_PATH = PROJECT_ROOT / "configuration" / "config.yaml"
+CONFIG_PATH = BACKEND_ROOT / "configuration" / "config.yaml"
 DOTENV_PATH = PROJECT_ROOT / ".env"
 
 _CONFIG_FIELD_MAP: dict[str, dict[str, str]] = {

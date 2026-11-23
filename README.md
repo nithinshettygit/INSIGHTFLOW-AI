@@ -81,7 +81,7 @@ git clone <repo-url>
 cd InsightFlow-AI
 cp .env.example .env
 # Set GROQ_API_KEY and CORS_ORIGINS in .env as needed.
-# Application settings are in configuration/config.yaml.
+# Application settings are in backend/configuration/config.yaml.
 
 # Backend
 cd backend

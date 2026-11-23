@@ -1,6 +1,7 @@
 """Application configuration loaded from YAML and secret environment values."""
 
 import os
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -104,11 +105,12 @@ class Settings(BaseModel):
         return self.app_env.lower() in {"development", "dev", "local"}
 
     def resolve_path(self, value: str) -> Path:
-        """Resolve a configured path against the project root when relative."""
+        """Resolve relative data paths to a writable root for the current runtime."""
         path = Path(value)
         if path.is_absolute():
             return path
-        return (PROJECT_ROOT / path).resolve()
+        root = Path(tempfile.gettempdir()) if os.getenv("VERCEL") == "1" else PROJECT_ROOT
+        return (root / path).resolve()
 
     @property
     def upload_path(self) -> Path:

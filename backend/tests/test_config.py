@@ -1,9 +1,10 @@
 from pathlib import Path
+import tempfile
 
 import pytest
 from pydantic import ValidationError
 
-from app.core.config import CONFIG_PATH, _load_settings
+from app.core.config import CONFIG_PATH, PROJECT_ROOT, _load_settings, get_settings
 
 
 def test_load_settings_uses_yaml_and_only_env_secrets(
@@ -57,3 +58,31 @@ def test_load_settings_requires_yaml_values_not_in_dotenv(
 
     with pytest.raises(ValidationError):
         _load_settings(config_path, dotenv_path)
+
+
+def test_relative_storage_paths_use_vercel_temp_directory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("VERCEL", "1")
+
+    settings = get_settings()
+
+    assert settings.upload_path == (
+        Path(tempfile.gettempdir()) / settings.upload_dir
+    ).resolve()
+    assert settings.model_path == (
+        Path(tempfile.gettempdir()) / settings.model_dir
+    ).resolve()
+    assert settings.rag_path == (
+        Path(tempfile.gettempdir()) / settings.rag_dir
+    ).resolve()
+
+
+def test_relative_storage_paths_use_project_root_outside_vercel(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("VERCEL", raising=False)
+
+    settings = get_settings()
+
+    assert settings.upload_path == (PROJECT_ROOT / settings.upload_dir).resolve()

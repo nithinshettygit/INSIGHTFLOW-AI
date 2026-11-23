@@ -80,6 +80,8 @@ Phases 0–10 provide a runnable full stack: FastAPI engines (including Insight)
 git clone <repo-url>
 cd InsightFlow-AI
 cp .env.example .env
+# Set GROQ_API_KEY and CORS_ORIGINS in .env as needed.
+# Application settings are in configuration/config.yaml.
 
 # Backend
 cd backend

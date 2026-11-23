@@ -1,0 +1,45 @@
+app:
+  name: InsightFlow AI
+  environment: development
+  debug: true
+
+api:
+  host: 0.0.0.0
+  port: 8000
+  prefix: /api/v1
+
+logging:
+  level: INFO
+
+groq:
+  model: qwen/qwen3.8-27b
+
+paths:
+  uploads: backend/data/uploads
+  models: backend/models
+  rag: backend/data/rag
+
+uploads:
+  max_size_mb: 25
+
+rag:
+  use_llm: true
+  chunk_size: 800
+  chunk_overlap: 120
+  top_k: 4
+  embedding_dim: 384
+  temperature: 0.0
+
+intent:
+  provider: llm
+  temperature: 0.0
+
+ml:
+  default_horizon: 7
+  default_clusters: 3
+  anomaly_contamination: 0.05
+  random_state: 42
+
+insight:
+  use_llm: true
+  temperature: 0.1

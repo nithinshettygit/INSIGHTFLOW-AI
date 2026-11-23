@@ -1,82 +1,103 @@
-"""Application configuration loaded from environment variables."""
+"""Application configuration loaded from YAML and secret environment values."""
 
+import os
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import yaml
+from dotenv import dotenv_values
+from pydantic import BaseModel, ConfigDict
 
 # backend/ directory (parent of app/)
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 # repository root (parent of backend/)
 PROJECT_ROOT = BACKEND_ROOT.parent
+CONFIG_PATH = PROJECT_ROOT / "configuration" / "config.yaml"
+DOTENV_PATH = PROJECT_ROOT / ".env"
+
+_CONFIG_FIELD_MAP: dict[str, dict[str, str]] = {
+    "app": {
+        "name": "app_name",
+        "environment": "app_env",
+        "debug": "debug",
+    },
+    "api": {
+        "host": "api_host",
+        "port": "api_port",
+        "prefix": "api_prefix",
+    },
+    "logging": {"level": "log_level"},
+    "groq": {"model": "groq_model"},
+    "paths": {
+        "uploads": "upload_dir",
+        "models": "model_dir",
+        "rag": "rag_dir",
+    },
+    "uploads": {"max_size_mb": "max_upload_size_mb"},
+    "rag": {
+        "use_llm": "rag_use_llm",
+        "chunk_size": "rag_chunk_size",
+        "chunk_overlap": "rag_chunk_overlap",
+        "top_k": "rag_top_k",
+        "embedding_dim": "rag_embedding_dim",
+        "temperature": "rag_temperature",
+    },
+    "intent": {
+        "provider": "intent_provider",
+        "temperature": "intent_temperature",
+    },
+    "ml": {
+        "default_horizon": "ml_default_horizon",
+        "default_clusters": "ml_default_clusters",
+        "anomaly_contamination": "ml_anomaly_contamination",
+        "random_state": "ml_random_state",
+    },
+    "insight": {
+        "use_llm": "insight_use_llm",
+        "temperature": "insight_temperature",
+    },
+}
+
+_ENV_FIELDS = {
+    "GROQ_API_KEY": "groq_api_key",
+    "CORS_ORIGINS": "cors_origins",
+}
 
 
-class Settings(BaseSettings):
-    """Central settings for InsightFlow AI backend.
+class Settings(BaseModel):
+    """Validated application settings."""
 
-    Values are read from environment variables and optional `.env` files.
-    Paths that are relative resolve against the repository root.
-    """
+    model_config = ConfigDict(extra="forbid")
 
-    model_config = SettingsConfigDict(
-        env_file=(
-            str(PROJECT_ROOT / ".env"),
-            str(BACKEND_ROOT / ".env"),
-        ),
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
-
-    app_name: str = Field(default="InsightFlow AI", alias="APP_NAME")
-    app_env: str = Field(default="development", alias="APP_ENV")
-    debug: bool = Field(default=True, alias="DEBUG")
-
-    api_host: str = Field(default="0.0.0.0", alias="API_HOST")
-    api_port: int = Field(default=8000, alias="API_PORT")
-    api_prefix: str = Field(default="/api/v1", alias="API_PREFIX")
-
-    groq_api_key: str = Field(default="", alias="GROQ_API_KEY")
-    groq_model: str = Field(
-        default="qwen/qwen3.6-27b",
-        alias="GROQ_MODEL",
-    )
-    intent_temperature: float = Field(default=0.0, alias="INTENT_TEMPERATURE")
-
-    upload_dir: str = Field(default="backend/data/uploads", alias="UPLOAD_DIR")
-    model_dir: str = Field(default="backend/models", alias="MODEL_DIR")
-    rag_dir: str = Field(default="backend/data/rag", alias="RAG_DIR")
-
-
-    log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    max_upload_size_mb: int = Field(default=25, alias="MAX_UPLOAD_SIZE_MB")
-    # Comma-separated browser origins allowed for CORS (Netlify/Vercel URLs).
-    cors_origins: str = Field(
-        default=(
-            "http://localhost:5173,http://127.0.0.1:5173,"
-            "http://localhost:3000,http://127.0.0.1:3000"
-        ),
-        alias="CORS_ORIGINS",
-    )
-
-    # RAG (Phase 8)
-    rag_chunk_size: int = Field(default=800, alias="RAG_CHUNK_SIZE")
-    rag_chunk_overlap: int = Field(default=120, alias="RAG_CHUNK_OVERLAP")
-    rag_top_k: int = Field(default=4, alias="RAG_TOP_K")
-    rag_embedding_dim: int = Field(default=384, alias="RAG_EMBEDDING_DIM")
-    rag_temperature: float = Field(default=0.0, alias="RAG_TEMPERATURE")
-
-    # ML (Phase 9)
-    ml_default_horizon: int = Field(default=7, alias="ML_DEFAULT_HORIZON")
-    ml_default_clusters: int = Field(default=3, alias="ML_DEFAULT_CLUSTERS")
-    ml_anomaly_contamination: float = Field(
-        default=0.05,
-        alias="ML_ANOMALY_CONTAMINATION",
-    )
-    ml_random_state: int = Field(default=42, alias="ML_RANDOM_STATE")
-
-    # Insight (Phase 10)
-    insight_temperature: float = Field(default=0.1, alias="INSIGHT_TEMPERATURE")
+    app_name: str
+    app_env: str
+    debug: bool
+    api_host: str
+    api_port: int
+    api_prefix: str
+    groq_api_key: str = ""
+    groq_model: str
+    intent_temperature: float
+    upload_dir: str
+    model_dir: str
+    rag_dir: str
+    log_level: str
+    max_upload_size_mb: int
+    cors_origins: str
+    rag_use_llm: bool
+    rag_chunk_size: int
+    rag_chunk_overlap: int
+    rag_top_k: int
+    rag_embedding_dim: int
+    rag_temperature: float
+    intent_provider: str
+    ml_default_horizon: int
+    ml_default_clusters: int
+    ml_anomaly_contamination: float
+    ml_random_state: int
+    insight_use_llm: bool
+    insight_temperature: float
 
     @property
     def is_development(self) -> bool:
@@ -102,7 +123,41 @@ class Settings(BaseSettings):
         return self.resolve_path(self.rag_dir)
 
 
+def _read_yaml_settings(config_path: Path) -> dict[str, Any]:
+    raw_config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    if not isinstance(raw_config, dict):
+        raise ValueError(f"Configuration must be a YAML mapping: {config_path}")
+
+    values: dict[str, Any] = {}
+    for section, section_values in raw_config.items():
+        field_map = _CONFIG_FIELD_MAP.get(section)
+        if field_map is None:
+            raise ValueError(f"Unknown configuration section: {section}")
+        if not isinstance(section_values, dict):
+            raise ValueError(f"Configuration section must be a mapping: {section}")
+
+        for key, value in section_values.items():
+            field_name = field_map.get(key)
+            if field_name is None:
+                raise ValueError(f"Unknown configuration key: {section}.{key}")
+            values[field_name] = value
+    return values
+
+
+def _load_settings(config_path: Path, dotenv_path: Path) -> Settings:
+    """Load YAML settings and allow only secrets/runtime origins from environment."""
+    values = _read_yaml_settings(config_path)
+    dotenv = dotenv_values(dotenv_path)
+    for env_name, field_name in _ENV_FIELDS.items():
+        value = os.environ.get(env_name)
+        if value is None:
+            value = dotenv.get(env_name)
+        if value is not None:
+            values[field_name] = value
+    return Settings.model_validate(values)
+
+
 @lru_cache
 def get_settings() -> Settings:
-    """Return cached settings instance."""
-    return Settings()
+    """Return the cached application settings."""
+    return _load_settings(CONFIG_PATH, DOTENV_PATH)

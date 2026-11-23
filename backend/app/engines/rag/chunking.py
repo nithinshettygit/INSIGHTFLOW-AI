@@ -17,8 +17,8 @@ class TextChunk:
 def chunk_pages(
     pages: list[tuple[int, str]],
     *,
-    chunk_size: int = 800,
-    chunk_overlap: int = 120,
+    chunk_size: int,
+    chunk_overlap: int,
 ) -> list[TextChunk]:
     """Split page texts into overlapping character windows.
 
